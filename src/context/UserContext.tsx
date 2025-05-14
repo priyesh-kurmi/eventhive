@@ -51,47 +51,73 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   const pathname = usePathname();
 
   const fetchUserData = async () => {
-    if (!user) {
-      setIsLoading(false);
-      return;
-    }
+  if (!user) {
+    setIsLoading(false);
+    return;
+  }
 
-    try {
-      const response = await fetch(`/api/user/${user.id}`);
+  try {
+    console.log("Fetching user data for ID:", user.id);
+    const response = await fetch(`/api/user/${user.id}`);
+    
+    if (response.ok) {
+      const data = await response.json();
+      setUserData(data.user);
+    } else {
+      // Get response text first for safer error handling
+      const rawResponseText = await response.text();
       
-      if (response.ok) {
-        const data = await response.json();
-        setUserData(data.user);
-      } else {
-        const errorData = await response.json();
+      // Try to parse as JSON if possible
+      let errorData: { code?: string } = {};
+      if (rawResponseText) {
+        try {
+          errorData = JSON.parse(rawResponseText);
+        } catch (parseError) {
+          console.warn("Response is not valid JSON:", rawResponseText);
+        }
+      }
+      
+      // Handle 404 for onboarding
+      if (response.status === 404 && errorData.code === "user_not_found") {
+        console.log("User needs onboarding");
+        setUserData(null);
         
-        // Check if this is a user who needs onboarding
-        if (response.status === 404 && errorData.code === "user_not_found") {
-          setUserData(null);
-          
-          // Redirect to onboarding if the user is not already there
-          // and if we're on a protected route that requires profile completion
-          if (
-            pathname !== '/onboarding' && 
-            pathname !== '/sign-in' && 
-            pathname !== '/sign-up' && 
-            pathname !== '/' && 
-            !pathname?.startsWith('/events/')
-          ) {
-            router.push('/onboarding');
-          }
+        if (
+          pathname !== '/onboarding' && 
+          pathname !== '/sign-in' && 
+          pathname !== '/sign-up' && 
+          pathname !== '/' && 
+          !pathname?.startsWith('/events/')
+        ) {
+          router.push('/onboarding');
+        }
+      } else {
+        // DB connection or other error - create fallback user data from Clerk
+        console.error("API error status:", response.status, "Data:", errorData);
+        console.warn("Likely MongoDB connection issue - please check IP whitelist in MongoDB Atlas");
+        
+        // Create minimal userData from Clerk as fallback
+        if (user) {
+          const fallbackData = {
+            name: user.fullName || `${user.firstName} ${user.lastName}`,
+            email: user.primaryEmailAddress?.emailAddress,
+            clerkId: user.id,
+            avatar: user.imageUrl
+          };
+          console.log("Using fallback user data from Clerk:", fallbackData);
+          setUserData(fallbackData as UserData);
         } else {
-          // Other error
-          console.error("Error fetching user data:", errorData);
           setUserData(null);
         }
       }
-    } catch (error) {
-      console.error("Error fetching user data:", error);
-    } finally {
-      setIsLoading(false);
     }
-  };
+  } catch (error) {
+    console.error("Network error fetching user data:", error);
+    setUserData(null);
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   // Add method to update current event
   const setCurrentEvent = (event: { id: string; name: string; date: string } | null) => {
