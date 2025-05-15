@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from "@clerk/nextjs";
-import { Clock, MapPin, ArrowRight, Plus, KeyRound } from 'lucide-react';
+import { Clock, MapPin, ArrowRight, Plus, KeyRound, UserCircle2, Users } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -39,9 +39,7 @@ interface Event {
 }
 
 export default function EventsPage() {
-  const [mainTab, setMainTab] = useState("myEvents");
-  const [myEventsTab, setMyEventsTab] = useState("ongoing");
-  const [otherEventsTab, setOtherEventsTab] = useState("ongoing");
+  const [activeTab, setActiveTab] = useState("ongoing");
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
   const [joinDialogOpen, setJoinDialogOpen] = useState(false);
@@ -122,12 +120,6 @@ export default function EventsPage() {
     }
   };
 
-  // Filter events created by current user
-  const myEvents = events.filter(event => event.createdBy?._id === userId);
-  
-  // Filter events created by others
-  const otherEvents = events.filter(event => event.createdBy?._id !== userId);
-
   // Helper function to categorize events
   const categorizeEvents = (eventList: Event[]) => {
     const now = new Date();
@@ -196,48 +188,71 @@ export default function EventsPage() {
     };
   };
 
-  const categorizedMyEvents = categorizeEvents(myEvents);
-  const categorizedOtherEvents = categorizeEvents(otherEvents);
+  // Categorize all events
+  const categorizedEvents = categorizeEvents(events);
 
-  // Event card component for reuse
-  const EventCard = ({ event }: { event: Event }) => (
-    <Card className="h-full">
-      <CardContent className="pt-6">
-        <h3 className="text-lg font-semibold">{event.title}</h3>
-        <p className="text-sm text-muted-foreground mt-2 line-clamp-2">
-          {event.description}
-        </p>
-        
-        <div className="flex items-center mt-4 text-sm">
-          <Clock className="h-4 w-4 mr-2" />
-          <span>{formatDate(event.date)} • {event.startTime} - {event.endTime}</span>
-        </div>
-        
-        <div className="flex items-center mt-2 text-sm">
-          <MapPin className="h-4 w-4 mr-2" />
-          <span>{event.isVirtual ? 'Virtual Event' : event.location}</span>
-        </div>
-        
-        <div className="flex flex-wrap gap-1 mt-4">
-          {event.topics && event.topics.slice(0, 3).map((topic, index) => (
-            <Badge key={index} variant="secondary" className="text-xs">
-              {topic}
+  // Event card component with ownership badge
+  const EventCard = ({ event }: { event: Event }) => {
+    const isCreatedByUser = event.createdBy?._id === userId;
+    
+    return (
+      <Card className="h-full">
+        <CardContent className="pt-6">
+          <div className="flex justify-between items-start mb-2">
+            <h3 className="text-lg font-semibold">{event.title}</h3>
+            <Badge 
+              variant={isCreatedByUser ? "default" : "secondary"}
+              className="ml-2 flex items-center gap-1"
+            >
+              {isCreatedByUser ? (
+                <>
+                  <UserCircle2 className="h-3 w-3" />
+                  <span>Created by You</span>
+                </>
+              ) : (
+                <>
+                  <Users className="h-3 w-3" />
+                  <span>Joined</span>
+                </>
+              )}
             </Badge>
-          ))}
-        </div>
-      </CardContent>
-      <CardFooter>
-        <Button 
-          variant="ghost" 
-          className="w-full justify-between" 
-          onClick={() => navigateToEventDetail(event._id)}
-        >
-          <span>View Details</span>
-          <ArrowRight className="h-4 w-4" />
-        </Button>
-      </CardFooter>
-    </Card>
-  );
+          </div>
+          
+          <p className="text-sm text-muted-foreground mt-2 line-clamp-2">
+            {event.description}
+          </p>
+          
+          <div className="flex items-center mt-4 text-sm">
+            <Clock className="h-4 w-4 mr-2" />
+            <span>{formatDate(event.date)} • {event.startTime} - {event.endTime}</span>
+          </div>
+          
+          <div className="flex items-center mt-2 text-sm">
+            <MapPin className="h-4 w-4 mr-2" />
+            <span>{event.isVirtual ? 'Virtual Event' : event.location}</span>
+          </div>
+          
+          <div className="flex flex-wrap gap-1 mt-4">
+            {event.topics && event.topics.slice(0, 3).map((topic, index) => (
+              <Badge key={index} variant="outline" className="text-xs">
+                {topic}
+              </Badge>
+            ))}
+          </div>
+        </CardContent>
+        <CardFooter>
+          <Button 
+            variant="ghost" 
+            className="w-full justify-between" 
+            onClick={() => navigateToEventDetail(event._id)}
+          >
+            <span>View Details</span>
+            <ArrowRight className="h-4 w-4" />
+          </Button>
+        </CardFooter>
+      </Card>
+    );
+  };
 
   if (loading) {
     return <div className="flex justify-center items-center min-h-[60vh]">Loading events...</div>;
@@ -267,140 +282,92 @@ export default function EventsPage() {
         </div>
       </div>
 
+      {/* Event statistics */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <Card className="bg-muted/40">
+          <CardContent className="pt-6">
+            <h3 className="text-sm font-medium text-muted-foreground">Total Events</h3>
+            <p className="text-2xl font-bold">{events.length}</p>
+          </CardContent>
+        </Card>
+        <Card className="bg-muted/40">
+          <CardContent className="pt-6">
+            <h3 className="text-sm font-medium text-muted-foreground">Created by You</h3>
+            <p className="text-2xl font-bold">{events.filter(e => e.createdBy?._id === userId).length}</p>
+          </CardContent>
+        </Card>
+        <Card className="bg-muted/40">
+          <CardContent className="pt-6">
+            <h3 className="text-sm font-medium text-muted-foreground">Joined</h3>
+            <p className="text-2xl font-bold">{events.filter(e => e.createdBy?._id !== userId).length}</p>
+          </CardContent>
+        </Card>
+        <Card className="bg-muted/40">
+          <CardContent className="pt-6">
+            <h3 className="text-sm font-medium text-muted-foreground">Upcoming</h3>
+            <p className="text-2xl font-bold">{categorizedEvents.upcoming.length}</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Events Timeline Tabs */}
       <Tabs 
-        defaultValue={mainTab} 
-        onValueChange={setMainTab} 
+        value={activeTab} 
+        onValueChange={setActiveTab} 
         className="w-full"
       >
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="myEvents">Created by Me</TabsTrigger>
-          <TabsTrigger value="otherEvents">Created by Others</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="ongoing">
+            Ongoing ({categorizedEvents.ongoing.length})
+          </TabsTrigger>
+          <TabsTrigger value="upcoming">
+            Upcoming ({categorizedEvents.upcoming.length})
+          </TabsTrigger>
+          <TabsTrigger value="completed">
+            Completed ({categorizedEvents.completed.length})
+          </TabsTrigger>
         </TabsList>
-
-        {/* My Events Content */}
-        <TabsContent value="myEvents">
-          <Tabs 
-            value={myEventsTab} 
-            onValueChange={setMyEventsTab} 
-            className="w-full mt-6"
-          >
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="ongoing">
-                Ongoing ({categorizedMyEvents.ongoing.length})
-              </TabsTrigger>
-              <TabsTrigger value="upcoming">
-                Upcoming ({categorizedMyEvents.upcoming.length})
-              </TabsTrigger>
-              <TabsTrigger value="completed">
-                Completed ({categorizedMyEvents.completed.length})
-              </TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="ongoing" className="mt-6">
-              {categorizedMyEvents.ongoing.length > 0 ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                  {categorizedMyEvents.ongoing.map((event) => (
-                    <EventCard key={event._id} event={event} />
-                  ))}
-                </div>
-              ) : (
-                <p className="text-muted-foreground py-4">
-                  No ongoing events created by you.
-                </p>
-              )}
-            </TabsContent>
-            
-            <TabsContent value="upcoming" className="mt-6">
-              {categorizedMyEvents.upcoming.length > 0 ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                  {categorizedMyEvents.upcoming.map((event) => (
-                    <EventCard key={event._id} event={event} />
-                  ))}
-                </div>
-              ) : (
-                <p className="text-muted-foreground py-4">
-                  No upcoming events created by you.
-                </p>
-              )}
-            </TabsContent>
-            
-            <TabsContent value="completed" className="mt-6">
-              {categorizedMyEvents.completed.length > 0 ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                  {categorizedMyEvents.completed.map((event) => (
-                    <EventCard key={event._id} event={event} />
-                  ))}
-                </div>
-              ) : (
-                <p className="text-muted-foreground py-4">
-                  No completed events created by you.
-                </p>
-              )}
-            </TabsContent>
-          </Tabs>
+        
+        <TabsContent value="ongoing" className="mt-6">
+          {categorizedEvents.ongoing.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+              {categorizedEvents.ongoing.map((event) => (
+                <EventCard key={event._id} event={event} />
+              ))}
+            </div>
+          ) : (
+            <p className="text-muted-foreground py-4">
+              No ongoing events available.
+            </p>
+          )}
         </TabsContent>
-
-        {/* Others' Events Content */}
-        <TabsContent value="otherEvents">
-          <Tabs 
-            value={otherEventsTab} 
-            onValueChange={setOtherEventsTab} 
-            className="w-full mt-6"
-          >
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="ongoing">
-                Ongoing ({categorizedOtherEvents.ongoing.length})
-              </TabsTrigger>
-              <TabsTrigger value="upcoming">
-                Upcoming ({categorizedOtherEvents.upcoming.length})
-              </TabsTrigger>
-              <TabsTrigger value="completed">
-                Completed ({categorizedOtherEvents.completed.length})
-              </TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="ongoing" className="mt-6">
-              {categorizedOtherEvents.ongoing.length > 0 ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                  {categorizedOtherEvents.ongoing.map((event) => (
-                    <EventCard key={event._id} event={event} />
-                  ))}
-                </div>
-              ) : (
-                <p className="text-muted-foreground py-4">
-                  No ongoing events created by others.
-                </p>
-              )}
-            </TabsContent>
-            
-            <TabsContent value="upcoming" className="mt-6">
-              {categorizedOtherEvents.upcoming.length > 0 ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                  {categorizedOtherEvents.upcoming.map((event) => (
-                    <EventCard key={event._id} event={event} />
-                  ))}
-                </div>
-              ) : (
-                <p className="text-muted-foreground py-4">
-                  No upcoming events created by others.
-                </p>
-              )}
-            </TabsContent>
-            
-            <TabsContent value="completed" className="mt-6">
-              {categorizedOtherEvents.completed.length > 0 ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                  {categorizedOtherEvents.completed.map((event) => (
-                    <EventCard key={event._id} event={event} />
-                  ))}
-                </div>
-              ) : (
-                <p className="text-muted-foreground py-4">
-                  No completed events created by others.
-                </p>
-              )}
-            </TabsContent>
-          </Tabs>
+        
+        <TabsContent value="upcoming" className="mt-6">
+          {categorizedEvents.upcoming.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+              {categorizedEvents.upcoming.map((event) => (
+                <EventCard key={event._id} event={event} />
+              ))}
+            </div>
+          ) : (
+            <p className="text-muted-foreground py-4">
+              No upcoming events available.
+            </p>
+          )}
+        </TabsContent>
+        
+        <TabsContent value="completed" className="mt-6">
+          {categorizedEvents.completed.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+              {categorizedEvents.completed.map((event) => (
+                <EventCard key={event._id} event={event} />
+              ))}
+            </div>
+          ) : (
+            <p className="text-muted-foreground py-4">
+              No completed events available.
+            </p>
+          )}
         </TabsContent>
       </Tabs>
 
