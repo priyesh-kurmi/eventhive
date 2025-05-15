@@ -1,8 +1,6 @@
-// EXISTING FILE: c:\Users\kpriy\OneDrive\Desktop\event\event-hive\src\app\dashboard\events\[id]\page.tsx
-// Update this file to display the event code for organizers
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, use } from "react";
 import { useRouter } from "next/navigation";
 import { 
   Calendar, 
@@ -28,7 +26,9 @@ interface EventParams {
 
 export default function EventDetailPage({ params }: EventParams) {
   const router = useRouter();
-  const { id } = params;
+  // Fix 1: Type the result of use() properly
+  const unwrappedParams = use(params as any) as { id: string };
+  const id = unwrappedParams.id; 
   
   const [event, setEvent] = useState<any>(null);
   const [loading, setLoading] = useState(true);

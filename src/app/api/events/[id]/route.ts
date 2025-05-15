@@ -19,7 +19,7 @@ export async function GET(
       );
     }
 
-    const { id } = context.params;
+    const { id } = await context.params;
     
     // Connect to database
     await connectToDatabase();
