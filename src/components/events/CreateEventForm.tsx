@@ -14,7 +14,8 @@ export default function CreateEventForm() {
     title: "",
     description: "",
     date: "",
-    time: "",
+    startTime: "", // Changed from time to startTime
+    endTime: "",   // Added endTime field
     isVirtual: false,
     location: "",
   });
@@ -52,8 +53,10 @@ export default function CreateEventForm() {
     setError("");
 
     try {
-      // Combine date and time
-      const dateTime = new Date(`${formData.date}T${formData.time || '00:00'}`);
+      // Validate that end time is after start time
+      if (formData.startTime && formData.endTime && formData.startTime >= formData.endTime) {
+        throw new Error("End time must be after start time");
+      }
       
       const response = await fetch("/api/events/create", {
         method: "POST",
@@ -63,7 +66,9 @@ export default function CreateEventForm() {
         body: JSON.stringify({
           title: formData.title,
           description: formData.description,
-          date: dateTime.toISOString(),
+          date: formData.date,
+          startTime: formData.startTime,
+          endTime: formData.endTime,
           isVirtual: formData.isVirtual,
           location: formData.location,
           topics,
@@ -134,7 +139,7 @@ export default function CreateEventForm() {
         ></textarea>
       </div>
 
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
         <div>
           <label htmlFor="date" className="block text-sm font-medium text-gray-700">
             Date *
@@ -156,14 +161,30 @@ export default function CreateEventForm() {
         </div>
 
         <div>
-          <label htmlFor="time" className="block text-sm font-medium text-gray-700">
-            Time
+          <label htmlFor="startTime" className="block text-sm font-medium text-gray-700">
+            Start Time *
           </label>
           <input
             type="time"
-            name="time"
-            id="time"
-            value={formData.time}
+            name="startTime"
+            id="startTime"
+            required
+            value={formData.startTime}
+            onChange={handleInputChange}
+            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+          />
+        </div>
+
+        <div>
+          <label htmlFor="endTime" className="block text-sm font-medium text-gray-700">
+            End Time *
+          </label>
+          <input
+            type="time"
+            name="endTime"
+            id="endTime"
+            required
+            value={formData.endTime}
             onChange={handleInputChange}
             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
           />

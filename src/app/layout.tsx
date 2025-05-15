@@ -1,10 +1,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import { ClerkProvider } from '@clerk/nextjs';
-import Navbar from "@/components/ui/navbar";
-import { Toaster } from "@/components/ui/toast";
-import { UserProvider } from "@/context/UserContext";
+import ClientLayout from "@/components/ClientLayout";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
@@ -19,18 +16,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <ClerkProvider>
-      <UserProvider>
-        <html lang="en">
-          <body className={`${inter.variable} font-sans`}>
-            <Navbar />
-            <main className="max-w-screen-lg mx-auto px-4 py-8">
-              {children}
-            </main>
-            <Toaster />
-          </body>
-        </html>
-      </UserProvider>
-    </ClerkProvider>
+    <html lang="en">
+      <body className={`${inter.variable} font-sans`}>
+        <ClientLayout>
+          {children}
+        </ClientLayout>
+      </body>
+    </html>
   );
 }

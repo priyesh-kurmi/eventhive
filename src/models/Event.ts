@@ -4,9 +4,11 @@ export interface IEvent extends Document {
   title: string;
   description: string;
   date: Date;
+  startTime: string; // Added field for start time (HH:MM format)
+  endTime: string;   // Added field for end time (HH:MM format)
   isVirtual: boolean;
   location: string;
-  code: string; // Add this line for event code
+  code: string;
   speakerList: {
     userId: mongoose.Types.ObjectId;
     name: string;
@@ -24,9 +26,11 @@ const EventSchema = new Schema<IEvent>(
     title: { type: String, required: true },
     description: { type: String, required: true },
     date: { type: Date, required: true },
+    startTime: { type: String, required: true }, // Added field
+    endTime: { type: String, required: true },   // Added field
     isVirtual: { type: Boolean, default: false },
     location: { type: String },
-    code: { type: String, required: true, unique: true }, // Add this line
+    code: { type: String, required: true, unique: true },
     speakerList: [
       {
         userId: { type: Schema.Types.ObjectId, ref: 'User' },
