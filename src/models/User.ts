@@ -4,12 +4,18 @@ export interface IUser extends Document {
   name: string;
   email: string;
   clerkId: string;
-  profession: string;
-  skills: string[];
-  interests: string[];
-  bio: string;
-  avatar: string;
-  connections: mongoose.Types.ObjectId[];
+  profession?: string;
+  company?: string;
+  bio?: string;
+  avatar?: string;
+  skills?: string[];
+  interests?: string[];
+  events?: mongoose.Types.ObjectId[]; // Add this line
+  eventPreferences?: {
+    eventTypes?: string[];
+    formats?: string[];
+    networkingGoals?: string[];
+  };
   createdAt: Date;
   updatedAt: Date;
 }
@@ -17,14 +23,20 @@ export interface IUser extends Document {
 const UserSchema = new Schema<IUser>(
   {
     name: { type: String, required: true },
-    email: { type: String, required: true, unique: true },
+    email: { type: String, required: true },
     clerkId: { type: String, required: true, unique: true },
-    profession: { type: String, default: '' },
+    profession: { type: String },
+    company: { type: String },
+    bio: { type: String },
+    avatar: { type: String },
     skills: [{ type: String }],
     interests: [{ type: String }],
-    bio: { type: String, default: '' },
-    avatar: { type: String, default: '' },
-    connections: [{ type: Schema.Types.ObjectId, ref: 'User' }],
+    events: [{ type: Schema.Types.ObjectId, ref: 'Event' }], // Add this line
+    eventPreferences: {
+      eventTypes: [{ type: String }],
+      formats: [{ type: String }],
+      networkingGoals: [{ type: String }],
+    },
   },
   { timestamps: true }
 );
