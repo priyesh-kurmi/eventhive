@@ -35,7 +35,6 @@ export default function EventDetailPage({ params }: EventParams) {
   const router = useRouter();
   const { userId } = useAuth();
   const { user } = useUser();
-  // Use the useParams hook
   const routeParams = useParams();
   const id = routeParams.id as string;
   const { darkMode } = useTheme();
@@ -49,7 +48,6 @@ export default function EventDetailPage({ params }: EventParams) {
   const [activeTab, setActiveTab] = useState("details");
   const [showCode, setShowCode] = useState(false);
   const [codeCopied, setCodeCopied] = useState(false);
-  const [showChat, setShowChat] = useState(false);
 
   useEffect(() => {
     const fetchEvent = async () => {
@@ -160,7 +158,7 @@ export default function EventDetailPage({ params }: EventParams) {
   }
 
   return (
-    <div className="flex flex-col md:flex-row gap-6">
+    <div className="flex flex-col gap-6">
       {/* Main content */}
       <div className="flex-1">
         {/* Back button */}
@@ -188,11 +186,11 @@ export default function EventDetailPage({ params }: EventParams) {
               </div>
               <div className="mt-4 md:mt-0 flex gap-2">
                 <button 
-                  onClick={() => setShowChat(!showChat)}
+                  onClick={() => setActiveTab("discussions")}
                   className="inline-flex items-center px-3 py-1.5 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 md:hidden"
                 >
                   <MessageCircle className="h-4 w-4 mr-2" />
-                  {showChat ? "Hide Chat" : "Show Chat"}
+                  Discussions
                 </button>
                 <button className="inline-flex items-center px-3 py-1.5 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
                   <Share2 className="h-4 w-4 mr-2" />
@@ -244,9 +242,9 @@ export default function EventDetailPage({ params }: EventParams) {
                         type={showCode ? "text" : "password"}
                         readOnly
                         value={event.code}
-                        className="focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 dark:text-gray-200 pr-10"
+                        className="focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 dark:text-gray-200 pr-20"
                       />
-                      <div className="absolute inset-y-0 right-0 flex items-center pr-3">
+                      <div className="absolute inset-y-0 right-0 flex items-center pr-3 space-x-2">
                         <button
                           type="button"
                           onClick={() => setShowCode(!showCode)}
@@ -258,16 +256,20 @@ export default function EventDetailPage({ params }: EventParams) {
                             <Eye className="h-4 w-4" />
                           )}
                         </button>
+                        <button
+                          onClick={copyEventCode}
+                          className="text-gray-400 dark:text-gray-500 hover:text-gray-500 dark:hover:text-gray-400 focus:outline-none"
+                        >
+                          <Copy className="h-4 w-4" />
+                        </button>
                       </div>
                     </div>
                   </div>
-                  <button
-                    onClick={copyEventCode}
-                    className="ml-2 inline-flex items-center px-2.5 py-1.5 border border-gray-300 dark:border-gray-600 text-xs font-medium rounded text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:ring-offset-gray-800"
-                  >
-                    <Copy className="h-3.5 w-3.5 mr-1" />
-                    {codeCopied ? "Copied!" : "Copy"}
-                  </button>
+                  {codeCopied && (
+                    <span className="ml-2 text-xs text-green-600 dark:text-green-400">
+                      Copied!
+                    </span>
+                  )}
                 </div>
                 <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                   Share this code with attendees so they can join the event directly.
@@ -279,7 +281,7 @@ export default function EventDetailPage({ params }: EventParams) {
 
         {/* Tabs */}
         <Tabs.Root value={activeTab} onValueChange={details => setActiveTab(details.value as string)}>
-          <Tabs.List className="border-b border-gray-200 dark:border-gray-700 mb-6">
+          <Tabs.List className="flex border-b border-gray-200 dark:border-gray-700 mb-6">
             <Tabs.Trigger 
               value="details"
               className={`py-4 px-1 border-b-2 font-medium text-sm mr-8 ${
@@ -309,7 +311,7 @@ export default function EventDetailPage({ params }: EventParams) {
                   : "border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600"
               }`}
             >
-              <MessageSquare className="h-4 w-4 mr-2" />
+              <MessageCircle className="h-4 w-4 mr-2" />
               Discussions
             </Tabs.Trigger>
           </Tabs.List>
@@ -377,86 +379,39 @@ export default function EventDetailPage({ params }: EventParams) {
 
             <Tabs.Content value="discussions">
               <div className="px-4 py-5 sm:p-6">
-                {/* Implement discussions when you have the discussions feature ready */}
-                <div className="text-center py-10">
-                  <MessageSquare className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500" />
-                  <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-gray-100">No discussions yet</h3>
-                  <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Get the conversation started by creating the first topic.</p>
-                  <div className="mt-6">
-                    <button
-                      type="button"
-                      className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:ring-offset-gray-800"
-                    >
-                      New Discussion
-                    </button>
+                {isAttending && userId ? (
+                  <AblyProvider clientId={userId}>
+                    <EventChat 
+                      eventId={id} 
+                      userId={userId} 
+                      userName={user?.fullName || user?.username || "Anonymous"} 
+                    />
+                  </AblyProvider>
+                ) : (
+                  <div className="text-center py-10">
+                    <MessageCircle className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500" />
+                    <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-gray-100">Event Discussions</h3>
+                    <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                      Join this event to participate in the live discussions with other attendees.
+                    </p>
+                    {!isAttending && (
+                      <div className="mt-6">
+                        <button
+                          onClick={handleJoinEvent}
+                          disabled={joiningEvent}
+                          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:ring-offset-gray-800"
+                        >
+                          <Star className="h-4 w-4 mr-2" />
+                          {joiningEvent ? "Joining..." : "Join Event"}
+                        </button>
+                      </div>
+                    )}
                   </div>
-                </div>
+                )}
               </div>
             </Tabs.Content>
           </div>
         </Tabs.Root>
-
-        {/* Mobile chat (conditionally shown) */}
-        <div className={`mt-6 md:hidden ${showChat ? 'block' : 'hidden'}`}>
-          {isAttending && userId ? (
-            <AblyProvider clientId={userId}>
-              <EventChat 
-                eventId={id} 
-                userId={userId} 
-                userName={user?.fullName || user?.username || "Anonymous"} 
-              />
-            </AblyProvider>
-          ) : (
-            <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow text-center">
-              <MessageCircle className="h-12 w-12 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
-              <h3 className="text-lg font-medium mb-2 dark:text-white">Event Chat</h3>
-              <p className="text-gray-500 dark:text-gray-400 mb-4">
-                Join this event to participate in the live chat with other attendees.
-              </p>
-              {!isAttending && (
-                <button
-                  onClick={handleJoinEvent}
-                  disabled={joiningEvent}
-                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 focus:outline-none"
-                >
-                  <Star className="h-4 w-4 mr-2" />
-                  {joiningEvent ? "Joining..." : "Join Event"}
-                </button>
-              )}
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Chat sidebar - only visible on medium and larger screens */}
-      <div className="hidden md:block md:w-1/3">
-        {isAttending && userId ? (
-          <AblyProvider clientId={userId}>
-            <EventChat 
-              eventId={id} 
-              userId={userId} 
-              userName={user?.fullName || user?.username || "Anonymous"} 
-            />
-          </AblyProvider>
-        ) : (
-          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow text-center">
-            <MessageCircle className="h-12 w-12 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
-            <h3 className="text-lg font-medium mb-2 dark:text-white">Event Chat</h3>
-            <p className="text-gray-500 dark:text-gray-400 mb-4">
-              Join this event to participate in the live chat with other attendees.
-            </p>
-            {!isAttending && (
-              <button
-                onClick={handleJoinEvent}
-                disabled={joiningEvent}
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 focus:outline-none"
-              >
-                <Star className="h-4 w-4 mr-2" />
-                {joiningEvent ? "Joining..." : "Join Event"}
-              </button>
-            )}
-          </div>
-        )}
       </div>
     </div>
   );

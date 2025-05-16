@@ -12,6 +12,7 @@ import {
   Menu,
   MoonIcon,
   SunIcon,
+  BellIcon,
   X,
 } from "lucide-react";
 import { Dialog } from "@ark-ui/react";
@@ -54,16 +55,6 @@ export default function DashboardLayout({
                 EventHive
               </span>
             </Link>
-            <button
-              onClick={toggleDarkMode}
-              className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700"
-            >
-              {darkMode ? (
-                <SunIcon className="h-5 w-5 text-yellow-500" />
-              ) : (
-                <MoonIcon className="h-5 w-5 text-gray-700 dark:text-gray-300" />
-              )}
-            </button>
           </div>
 
           <div className="flex flex-col flex-1 overflow-y-auto">
@@ -108,6 +99,33 @@ export default function DashboardLayout({
               </p>
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* Desktop/Medium Header */}
+      <div className="hidden md:flex fixed top-0 right-0 left-64 h-16 z-40 items-center justify-end px-6 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+        <div className="flex items-center space-x-4">
+          <button
+            onClick={toggleDarkMode}
+            className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700"
+            aria-label="Toggle dark mode"
+          >
+            {darkMode ? (
+              <SunIcon className="h-5 w-5 text-yellow-500" />
+            ) : (
+              <MoonIcon className="h-5 w-5 text-gray-700 dark:text-gray-300" />
+            )}
+          </button>
+          
+          <button
+            className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 relative"
+            aria-label="Notifications"
+          >
+            <BellIcon className="h-5 w-5 text-gray-700 dark:text-gray-300" />
+            <span className="absolute top-0 right-0 h-2 w-2 rounded-full bg-red-500"></span>
+          </button>
+          
+          <UserButton afterSignOutUrl="/" />
         </div>
       </div>
 
@@ -203,8 +221,8 @@ export default function DashboardLayout({
       </Dialog.Root>
 
       {/* Main content */}
-      <main className="flex-1 md:pl-64 pt-16 md:pt-0">
-        <div className="w-full mx-auto p-4 md:p-8">{children}</div>
+      <main className="flex-1 md:pl-64 pt-16 md:pt-16">
+        <div className="w-full p-4 md:p-8">{children}</div>
       </main>
     </div>
   );
