@@ -1,18 +1,18 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Calendar, Users, MessageSquare, BarChart2, Settings } from "lucide-react";
+import {
+  Home,
+  Calendar,
+  Settings,
+} from "lucide-react";
 import { UserButton } from "@clerk/nextjs";
 import clsx from "clsx";
 
 const navItems = [
   { name: "Overview", href: "/dashboard", icon: Home },
   { name: "Events", href: "/dashboard/events", icon: Calendar },
-  { name: "Matchmaking", href: "/dashboard/matchmaking", icon: Users },
-  { name: "Discussions", href: "/dashboard/discussions", icon: MessageSquare },
-  { name: "Analytics", href: "/dashboard/analytics", icon: BarChart2 },
   { name: "Settings", href: "/dashboard/settings", icon: Settings },
 ];
 
@@ -22,21 +22,27 @@ interface SidebarProps {
 
 export default function DashboardSidebar({ className }: SidebarProps) {
   const pathname = usePathname();
-  
+
   return (
-    <div className={clsx("flex flex-col w-64 bg-white border-r border-gray-200", className)}>
+    <div
+      className={clsx(
+        "flex flex-col w-64 bg-white border-r border-gray-200",
+        className
+      )}
+    >
       <div className="flex h-16 items-center justify-between px-4 border-b">
         <Link href="/dashboard" className="flex items-center">
           <span className="text-xl font-bold text-indigo-600">EventHive</span>
         </Link>
       </div>
-      
+
       <div className="flex flex-col flex-1 overflow-y-auto">
         <nav className="flex-1 px-2 py-4 space-y-1">
           {navItems.map((item) => {
-            const isActive = pathname === item.href || 
-                        (item.href !== "/dashboard" && pathname?.startsWith(item.href));
-            
+            const isActive =
+              pathname === item.href ||
+              (item.href !== "/dashboard" && pathname?.startsWith(item.href));
+
             return (
               <Link
                 key={item.name}
@@ -48,17 +54,19 @@ export default function DashboardSidebar({ className }: SidebarProps) {
                     : "text-gray-700 hover:bg-gray-100"
                 )}
               >
-                <item.icon className={clsx(
-                  "mr-3 h-5 w-5",
-                  isActive ? "text-indigo-500" : "text-gray-500"
-                )} />
+                <item.icon
+                  className={clsx(
+                    "mr-3 h-5 w-5",
+                    isActive ? "text-indigo-500" : "text-gray-500"
+                  )}
+                />
                 {item.name}
               </Link>
             );
           })}
         </nav>
       </div>
-      
+
       <div className="flex items-center p-4 border-t border-gray-200">
         <UserButton afterSignOutUrl="/" />
         <div className="ml-3">

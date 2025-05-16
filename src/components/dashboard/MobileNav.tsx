@@ -3,16 +3,13 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu, X, Home, Calendar, Users, MessageSquare, BarChart2, Settings } from "lucide-react";
+import { Menu, X, Home, Calendar, Settings } from "lucide-react";
 import { UserButton } from "@clerk/nextjs";
 import clsx from "clsx";
 
 const navItems = [
   { name: "Overview", href: "/dashboard", icon: Home },
   { name: "Events", href: "/dashboard/events", icon: Calendar },
-  { name: "Matchmaking", href: "/dashboard/matchmaking", icon: Users },
-  { name: "Discussions", href: "/dashboard/discussions", icon: MessageSquare },
-  { name: "Analytics", href: "/dashboard/analytics", icon: BarChart2 },
   { name: "Settings", href: "/dashboard/settings", icon: Settings },
 ];
 
