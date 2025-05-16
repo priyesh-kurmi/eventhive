@@ -18,10 +18,13 @@ import {
 import { Dialog } from "@ark-ui/react";
 import clsx from "clsx";
 import { useTheme } from "@/context/ThemeContext";
+import { MessageSquare, Users } from "lucide-react";
 
 const navItems = [
   { name: "Overview", href: "/dashboard", icon: Home },
   { name: "Events", href: "/dashboard/events", icon: Calendar },
+  { name: "Connections", href: "/dashboard/connections", icon: Users },
+  { name: "Messages", href: "/dashboard/messages", icon: MessageSquare },
   { name: "Settings", href: "/dashboard/settings", icon: Settings },
 ];
 

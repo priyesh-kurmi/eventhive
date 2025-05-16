@@ -6,6 +6,8 @@ import {
   Home,
   Calendar,
   Settings,
+  Users,
+  MessageSquare,
 } from "lucide-react";
 import { UserButton } from "@clerk/nextjs";
 import clsx from "clsx";
@@ -13,6 +15,8 @@ import clsx from "clsx";
 const navItems = [
   { name: "Overview", href: "/dashboard", icon: Home },
   { name: "Events", href: "/dashboard/events", icon: Calendar },
+  { name: "Connections", href: "/dashboard/connections", icon: Users },
+  { name: "Messages", href: "/dashboard/messages", icon: MessageSquare },
   { name: "Settings", href: "/dashboard/settings", icon: Settings },
 ];
 
