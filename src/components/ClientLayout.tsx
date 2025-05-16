@@ -14,7 +14,7 @@ export default function ClientLayout({
     <ClerkProvider>
       {/* Remove SessionProvider */}
       <UserProvider>
-        <main className="max-w-screen-lg mx-auto px-4 py-8">
+        <main className="w-full">
           {children}
         </main>
         <Toaster />
