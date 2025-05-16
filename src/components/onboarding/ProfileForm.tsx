@@ -17,7 +17,15 @@ const INTEREST_OPTIONS = [
   "Cybersecurity", "Product Management", "Startup", "Open Source"
 ];
 
-export default function ProfileForm({ clerkId }: { clerkId: string }) {
+export default function ProfileForm({ 
+  clerkId, 
+  isMinimal = false, 
+  requiredFields = ['name', 'profession', 'bio', 'skills', 'interests'] 
+}: { 
+  clerkId: string;
+  isMinimal?: boolean;
+  requiredFields?: string[];
+}) {
   const router = useRouter();
   const { setUserData } = useUser();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -62,25 +70,27 @@ export default function ProfileForm({ clerkId }: { clerkId: string }) {
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
     
-    if (!formData.name.trim()) {
+    if (requiredFields.includes('name') && !formData.name.trim()) {
       newErrors.name = "Name is required";
     }
     
-    if (!formData.profession.trim()) {
+    if (requiredFields.includes('profession') && !formData.profession.trim()) {
       newErrors.profession = "Profession is required";
     }
     
-    if (!formData.bio.trim()) {
-      newErrors.bio = "Bio is required";
-    } else if (formData.bio.length < 10) {
-      newErrors.bio = "Bio should be at least 10 characters";
+    if (requiredFields.includes('bio')) {
+      if (!formData.bio.trim()) {
+        newErrors.bio = "Bio is required";
+      } else if (formData.bio.length < 10) {
+        newErrors.bio = "Bio should be at least 10 characters";
+      }
     }
     
-    if (formData.skills.length === 0) {
+    if (requiredFields.includes('skills') && formData.skills.length === 0) {
       newErrors.skills = "Select at least one skill";
     }
     
-    if (formData.interests.length === 0) {
+    if (requiredFields.includes('interests') && formData.interests.length === 0) {
       newErrors.interests = "Select at least one interest";
     }
     
@@ -132,18 +142,20 @@ export default function ProfileForm({ clerkId }: { clerkId: string }) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6 bg-white p-6 rounded-lg shadow-sm">
-      <div className="mx-auto flex flex-col items-center mb-8">
-        <ImageUpload 
-          value={formData.avatar} 
-          onChange={handleAvatarChange} 
-        />
-        {errors.avatar && <p className="text-red-500 text-sm mt-1">{errors.avatar}</p>}
-      </div>
+      {!isMinimal && (
+        <div className="mx-auto flex flex-col items-center mb-8">
+          <ImageUpload 
+            value={formData.avatar} 
+            onChange={handleAvatarChange} 
+          />
+          {errors.avatar && <p className="text-red-500 text-sm mt-1">{errors.avatar}</p>}
+        </div>
+      )}
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
           <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
-            Full Name*
+            Full Name{requiredFields.includes('name') ? '*' : ''}
           </label>
           <input
             id="name"
@@ -159,7 +171,7 @@ export default function ProfileForm({ clerkId }: { clerkId: string }) {
         
         <div>
           <label htmlFor="profession" className="block text-sm font-medium text-gray-700 mb-1">
-            Profession*
+            Profession{requiredFields.includes('profession') ? '*' : ''}
           </label>
           <input
             id="profession"
@@ -173,64 +185,71 @@ export default function ProfileForm({ clerkId }: { clerkId: string }) {
           {errors.profession && <p className="text-red-500 text-sm mt-1">{errors.profession}</p>}
         </div>
         
+        {(!isMinimal || requiredFields.includes('company')) && (
+          <div>
+            <label htmlFor="company" className="block text-sm font-medium text-gray-700 mb-1">
+              Company/Organization{requiredFields.includes('company') ? '*' : ''}
+            </label>
+            <input
+              id="company"
+              name="company"
+              type="text"
+              value={formData.company}
+              onChange={handleInputChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              placeholder="Acme Inc."
+            />
+            {errors.company && <p className="text-red-500 text-sm mt-1">{errors.company}</p>}
+          </div>
+        )}
+      </div>
+      
+      {(!isMinimal || requiredFields.includes('bio')) && (
         <div>
-          <label htmlFor="company" className="block text-sm font-medium text-gray-700 mb-1">
-            Company/Organization
+          <label htmlFor="bio" className="block text-sm font-medium text-gray-700 mb-1">
+            Short Bio{requiredFields.includes('bio') ? '*' : ''}
           </label>
-          <input
-            id="company"
-            name="company"
-            type="text"
-            value={formData.company}
+          <textarea
+            id="bio"
+            name="bio"
+            value={formData.bio}
             onChange={handleInputChange}
+            rows={4}
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            placeholder="Acme Inc."
+            placeholder="Tell us a bit about yourself..."
           />
+          {errors.bio && <p className="text-red-500 text-sm mt-1">{errors.bio}</p>}
         </div>
-      </div>
+      )}
       
-      <div>
-        <label htmlFor="bio" className="block text-sm font-medium text-gray-700 mb-1">
-          Short Bio*
-        </label>
-        <textarea
-          id="bio"
-          name="bio"
-          value={formData.bio}
-          onChange={handleInputChange}
-          rows={4}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-          placeholder="Tell us a bit about yourself..."
-        />
-        {errors.bio && <p className="text-red-500 text-sm mt-1">{errors.bio}</p>}
-      </div>
+      {(!isMinimal || requiredFields.includes('skills')) && (
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Skills{requiredFields.includes('skills') ? '*' : ''}
+          </label>
+          <div className="flex flex-wrap gap-2">
+            {SKILL_OPTIONS.map((skill) => (
+              <button
+                key={skill}
+                type="button"
+                onClick={() => handleMultiSelect("skills", skill)}
+                className={`px-3 py-1 rounded-full text-sm ${
+                  formData.skills.includes(skill)
+                    ? "bg-indigo-100 text-indigo-800 border-indigo-200"
+                    : "bg-gray-100 text-gray-800 border-gray-200"
+                } border`}
+              >
+                {skill}
+              </button>
+            ))}
+          </div>
+          {errors.skills && <p className="text-red-500 text-sm mt-1">{errors.skills}</p>}
+        </div>
+      )}
       
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">
-          Skills*
-        </label>
-        <div className="flex flex-wrap gap-2">
-          {SKILL_OPTIONS.map((skill) => (
-            <button
-              key={skill}
-              type="button"
-              onClick={() => handleMultiSelect("skills", skill)}
-              className={`px-3 py-1 rounded-full text-sm ${
-                formData.skills.includes(skill)
-                  ? "bg-indigo-100 text-indigo-800 border-indigo-200"
-                  : "bg-gray-100 text-gray-800 border-gray-200"
-              } border`}
-            >
-              {skill}
-            </button>
-          ))}
-        </div>
-        {errors.skills && <p className="text-red-500 text-sm mt-1">{errors.skills}</p>}
-      </div>
-      
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Interests*
+          Interests{requiredFields.includes('interests') ? '*' : ''} {isMinimal && '(Choose 3-5)'}
         </label>
         <div className="flex flex-wrap gap-2">
           {INTEREST_OPTIONS.map((interest) => (
@@ -259,7 +278,7 @@ export default function ProfileForm({ clerkId }: { clerkId: string }) {
             isSubmitting ? "opacity-70 cursor-not-allowed" : ""
           }`}
         >
-          {isSubmitting ? "Saving..." : "Complete Profile Setup"}
+          {isSubmitting ? "Saving..." : isMinimal ? "Continue" : "Complete Profile Setup"}
         </button>
       </div>
     </form>

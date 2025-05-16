@@ -10,7 +10,15 @@ export interface IUser extends Document {
   avatar?: string;
   skills?: string[];
   interests?: string[];
-  events?: mongoose.Types.ObjectId[]; // Add this line
+  events?: mongoose.Types.ObjectId[];
+  // New fields
+  yearsExperience?: string;
+  location?: string;
+  linkedin?: string;
+  website?: string;
+  languages?: string;
+  customTags?: string;
+  eventsAttending?: string;
   eventPreferences?: {
     eventTypes?: string[];
     formats?: string[];
@@ -31,7 +39,15 @@ const UserSchema = new Schema<IUser>(
     avatar: { type: String },
     skills: [{ type: String }],
     interests: [{ type: String }],
-    events: [{ type: Schema.Types.ObjectId, ref: 'Event' }], // Add this line
+    events: [{ type: Schema.Types.ObjectId, ref: 'Event' }],
+    // New fields
+    yearsExperience: { type: String },
+    location: { type: String },
+    linkedin: { type: String },
+    website: { type: String },
+    languages: { type: String },
+    customTags: { type: String },
+    eventsAttending: { type: String },
     eventPreferences: {
       eventTypes: [{ type: String }],
       formats: [{ type: String }],
