@@ -10,8 +10,10 @@
   },
   "dependencies": {
     "@ably-labs/react-hooks": "^2.1.2",
+    "@ark-ui/react": "^5.9.1",
     "@clerk/nextjs": "^6.19.2",
     "@headlessui/react": "^2.2.3",
+    "@internationalized/date": "^3.8.0",
     "@radix-ui/react-dialog": "^1.1.13",
     "@radix-ui/react-label": "^2.1.6",
     "@radix-ui/react-separator": "^1.1.6",
@@ -21,6 +23,7 @@
     "ably": "^2.9.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "date-fns": "^4.1.0",
     "dotenv": "^16.5.0",
     "lucide-react": "^0.510.0",
     "mongoose": "^8.14.3",
