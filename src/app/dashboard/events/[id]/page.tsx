@@ -23,6 +23,7 @@ import {
 import { Tabs } from "@ark-ui/react";
 import { formatDate } from "@/lib/utils";
 import EventChat from "@/components/chat/EventChat";
+import { useTheme } from "@/context/ThemeContext";
 
 interface EventParams {
   params: {
@@ -37,6 +38,7 @@ export default function EventDetailPage({ params }: EventParams) {
   // Use the useParams hook
   const routeParams = useParams();
   const id = routeParams.id as string;
+  const { darkMode } = useTheme();
   
   const [event, setEvent] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -48,23 +50,6 @@ export default function EventDetailPage({ params }: EventParams) {
   const [showCode, setShowCode] = useState(false);
   const [codeCopied, setCodeCopied] = useState(false);
   const [showChat, setShowChat] = useState(false);
-  const [darkMode, setDarkMode] = useState(false);
-
-  // Apply dark mode
-  useEffect(() => {
-    // Check for system preference or localStorage setting
-    const savedMode = localStorage.getItem('darkMode');
-    const isDark = savedMode === 'true' || 
-      (savedMode === null && window.matchMedia('(prefers-color-scheme: dark)').matches);
-    
-    setDarkMode(isDark);
-
-    if (isDark) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  }, []);
 
   useEffect(() => {
     const fetchEvent = async () => {

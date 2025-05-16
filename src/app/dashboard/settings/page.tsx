@@ -24,7 +24,7 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="w-full mx-auto">
       <Tabs.Root value={activeTab} onValueChange={details => setActiveTab(details.value)}>
         <Tabs.List className="flex space-x-1 rounded-xl bg-gray-100 dark:bg-gray-800 p-1 mb-8">
           <Tabs.Trigger 

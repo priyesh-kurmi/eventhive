@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { Dialog } from "@ark-ui/react";
 import clsx from "clsx";
+import { useTheme } from "@/context/ThemeContext";
 
 const navItems = [
   { name: "Overview", href: "/dashboard", icon: Home },
@@ -31,16 +32,7 @@ export default function DashboardLayout({
   const { userId, isLoaded } = useAuth();
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
-  const [darkMode, setDarkMode] = useState(false);
-
-  // Apply dark mode
-  useEffect(() => {
-    if (darkMode) {
-      document.documentElement.classList.add("dark");
-    } else {
-      document.documentElement.classList.remove("dark");
-    }
-  }, [darkMode]);
+  const { darkMode, toggleDarkMode } = useTheme();
 
   // Handle authentication
   useEffect(() => {
@@ -63,7 +55,7 @@ export default function DashboardLayout({
               </span>
             </Link>
             <button
-              onClick={() => setDarkMode(!darkMode)}
+              onClick={toggleDarkMode}
               className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700"
             >
               {darkMode ? (
@@ -129,7 +121,7 @@ export default function DashboardLayout({
 
         <div className="flex items-center space-x-2">
           <button
-            onClick={() => setDarkMode(!darkMode)}
+            onClick={toggleDarkMode}
             className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700"
           >
             {darkMode ? (
@@ -212,7 +204,7 @@ export default function DashboardLayout({
 
       {/* Main content */}
       <main className="flex-1 md:pl-64 pt-16 md:pt-0">
-        <div className="max-w-screen-2xl mx-auto p-4 md:p-8">{children}</div>
+        <div className="w-full mx-auto p-4 md:p-8">{children}</div>
       </main>
     </div>
   );

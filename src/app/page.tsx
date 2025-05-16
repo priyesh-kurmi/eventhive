@@ -12,12 +12,12 @@ export default async function Home() {
   }
 
   return (
-    <div className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="w-full mx-auto px-4 sm:px-6 lg:px-8">
       <header className="py-20 text-center">
         <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-gray-900 mb-6">
           Connect at Events with <span className="text-indigo-600">EventHive</span>
         </h1>
-        <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-8">
+        <p className="text-xl text-gray-600 w-full mx-auto mb-8">
           AI-powered networking platform that connects event attendees with similar interests and goals
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
