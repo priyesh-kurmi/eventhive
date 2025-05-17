@@ -2,7 +2,23 @@
 
 import { useState, useEffect, useRef } from "react";
 import { Send, User, ArrowLeft } from "lucide-react";
-import { getDirectMessageChannelName, DirectChatMessage } from "@/lib/ably";
+import {
+  getDirectMessageChannelName,
+  DirectChatMessage as BaseDirectChatMessage,
+} from "@/lib/ably";
+
+// Extend DirectChatMessage to include isCurrentUser
+interface DirectChatMessage {
+  id: string;
+  senderId: string;
+  receiverId: string;
+  content: string;
+  timestamp: number;
+  read: boolean;
+  isCurrentUser?: boolean; // This is the key addition
+  senderName?: string;
+  avatar?: string;
+}
 import { useChannel } from "@/hooks/useChannel";
 import { useRouter } from "next/navigation";
 
@@ -30,23 +46,103 @@ export default function DirectChat({
   const [user, setUser] = useState<ChatUser | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
+  const processedMessageIds = useRef<Set<string>>(new Set());
+  const messagesRef = useRef<DirectChatMessage[]>([]);
 
-  // Subscribe to Ably channel
-  const channelName = getDirectMessageChannelName(currentUserId, userId);
-  useChannel(channelName, (message) => {
-    // Handle new message from Ably
-    const newMsg = message.data as DirectChatMessage;
-    setMessages((prev) => [...prev, newMsg]);
+  // Keep messagesRef in sync with messages state
+  useEffect(() => {
+    messagesRef.current = messages;
+  }, [messages]);
+
+  // Subscribe to BOTH channels to ensure we get messages in both directions
+  const senderChannelName = getDirectMessageChannelName(currentUserId, userId);
+  const receiverChannelName = getDirectMessageChannelName(
+    userId,
+    currentUserId
+  );
+
+  // Log channel names for debugging
+  console.log(
+    "Channels we're listening on:",
+    senderChannelName,
+    receiverChannelName
+  );
+
+  // Common handler for all incoming messages
+  // Update the handleIncomingMessage function:
+const handleIncomingMessage = (newMsg: DirectChatMessage) => {
+  console.log("Received real-time message:", newMsg);
+  
+  if (processedMessageIds.current.has(newMsg.id)) {
+    console.log("Skipping already processed message:", newMsg.id);
+    return;
+  }
+  
+  // Ensure the isCurrentUser property is set correctly
+  const messageSenderId = String(newMsg.senderId || "").trim();
+  const currentUserIdStr = String(currentUserId || "").trim();
+  newMsg.isCurrentUser = messageSenderId === currentUserIdStr;
+  
+  console.log(`Message from ${messageSenderId}, current user: ${currentUserIdStr}, isCurrentUser: ${newMsg.isCurrentUser}`);
+  
+  // Add to processed set first to prevent duplicates during state update
+  processedMessageIds.current.add(newMsg.id);
+  
+  setMessages(prevMessages => {
+    // Check for temporary message to replace
+    const tempIndex = prevMessages.findIndex(m => 
+      m.id.startsWith('temp-') && 
+      m.content === newMsg.content && 
+      Math.abs(m.timestamp - newMsg.timestamp) < 10000
+    );
+    
+    if (tempIndex >= 0) {
+      // Replace temp message
+      console.log("Replacing temp message with real message");
+      const newMessages = [...prevMessages];
+      newMessages[tempIndex] = newMsg;
+      return newMessages;
+    }
+    
+    // Add as new message
+    console.log("Adding new message");
+    return [...prevMessages, newMsg];
+  });
+};
+
+  // Subscribe to receiver channel (messages sent to me)
+  useChannel(receiverChannelName, (message) => {
+    handleIncomingMessage(message.data);
+  });
+
+  // Subscribe to sender channel (messages I send)
+  useChannel(senderChannelName, (message) => {
+    handleIncomingMessage(message.data);
   });
 
   // Fetch past messages on mount
   useEffect(() => {
     const fetchMessages = async () => {
       try {
+        console.log("Fetching messages for userId:", userId);
         const response = await fetch(`/api/messages/${userId}`);
         const data = await response.json();
 
         if (response.ok) {
+          console.log("Messages loaded:", data.messages?.length);
+
+          // Record all message IDs as processed
+          data.messages.forEach((msg: DirectChatMessage) => {
+            processedMessageIds.current.add(msg.id);
+          });
+
+          // If the API returns currentUserId, we can validate our local ID
+          if (data.currentUserId) {
+            console.log("API currentUserId:", data.currentUserId);
+            console.log("Component currentUserId:", currentUserId);
+            // You could optionally use the server-provided ID if needed
+          }
+
           setMessages(data.messages || []);
           setUser(data.user);
         } else {
@@ -72,15 +168,34 @@ export default function DirectChat({
     e.preventDefault();
 
     if (newMessage.trim() === "") return;
+    const messageContent = newMessage.trim();
+    setNewMessage("");
 
     try {
+      // Add optimistic update with a temporary ID
+      const tempId = `temp-${Date.now()}`;
+      const tempMessage: DirectChatMessage = {
+        id: tempId,
+        senderId: currentUserId,
+        receiverId: userId,
+        senderName: currentUserName,
+        content: messageContent,
+        timestamp: Date.now(),
+        read: false,
+      };
+
+      // Add message optimistically
+      setMessages((prev) => [...prev, tempMessage]);
+
+      console.log("Sending message:", messageContent);
+
       // Send the message to the API
       const response = await fetch(`/api/messages/${userId}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ content: newMessage }),
+        body: JSON.stringify({ content: messageContent }),
       });
 
       if (!response.ok) {
@@ -88,8 +203,7 @@ export default function DirectChat({
         throw new Error(data.error || "Failed to send message");
       }
 
-      // Clear input after successful send
-      setNewMessage("");
+      console.log("Message sent successfully");
     } catch (error) {
       console.error("Error sending message:", error);
     }
@@ -106,11 +220,41 @@ export default function DirectChat({
     router.push("/dashboard/messages");
   };
 
+  // Function to check if a message is from the current user
+  // Function to check if a message is from the current user
+  const isCurrentUserMessage = (message: DirectChatMessage) => {
+    // Convert both IDs to strings and normalize them
+    const messageSenderId = String(message.senderId || "").trim();
+    const currentUserIdStr = String(currentUserId || "").trim();
+
+    // Check for MongoDB ObjectId format and extract just the hex part if needed
+    const extractIdHex = (id: string) => {
+      // If it's a MongoDB ObjectId string representation
+      if (id.match(/^[0-9a-f]{24}$/)) {
+        return id;
+      }
+      // Extract hex value from ObjectId format if needed
+      const match = id.match(
+        /(?:ObjectId\(["']?([0-9a-f]{24})["']?\)|["']?([0-9a-f]{24})["']?)/i
+      );
+      return match ? match[1] || match[2] : id;
+    };
+
+    const normalizedMessageSenderId = extractIdHex(messageSenderId);
+    const normalizedCurrentUserId = extractIdHex(currentUserIdStr);
+
+    console.log(
+      `Comparing sender IDs (normalized): "${normalizedMessageSenderId}" === "${normalizedCurrentUserId}"`
+    );
+
+    return normalizedMessageSenderId === normalizedCurrentUserId;
+  };
+
   return (
     <div className="flex flex-col h-[calc(100vh-140px)] border border-gray-200 rounded-lg bg-white dark:bg-gray-800 dark:border-gray-700">
       {/* Chat header */}
       <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700 flex items-center">
-        <button 
+        <button
           onClick={handleBack}
           className="mr-2 p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700"
         >
@@ -129,8 +273,12 @@ export default function DirectChat({
             </div>
           )}
           <div>
-            <h3 className="text-lg font-medium text-gray-900 dark:text-white">{user?.name}</h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400">@{user?.username}</p>
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white">
+              {user?.name}
+            </h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              @{user?.username}
+            </p>
           </div>
         </div>
       </div>
@@ -148,55 +296,57 @@ export default function DirectChat({
           </div>
         ) : (
           <div className="space-y-4">
-            {messages.map((message, index) => (
-              <div
-                key={message.id || `temp-message-${index}`}
-                className={`flex ${
-                  message.senderId === currentUserId ? "justify-end" : "justify-start"
-                }`}
-              >
+            {messages.map((message, index) => {
+              const isCurrent = !!message.isCurrentUser;
+
+              return (
                 <div
-                  className={`flex max-w-[80%] ${
-                    message.senderId === currentUserId
-                      ? "flex-row-reverse"
-                      : "flex-row"
+                  key={message.id || `temp-message-${index}`}
+                  className={`flex ${
+                    isCurrent ? "justify-end" : "justify-start"
                   }`}
                 >
-                  {/* Avatar */}
-                  <div className="flex-shrink-0">
-                    {message.senderId !== currentUserId ? (
-                      user?.avatar ? (
-                        <img
-                          src={user.avatar}
-                          alt={user.name}
-                          className="h-8 w-8 rounded-full"
-                        />
-                      ) : (
-                        <div className="h-8 w-8 rounded-full bg-indigo-100 flex items-center justify-center">
-                          <User className="h-4 w-4 text-indigo-600" />
-                        </div>
-                      )
-                    ) : null}
-                  </div>
-
-                  {/* Message bubble */}
                   <div
-                    className={`mx-2 px-4 py-2 rounded-lg ${
-                      message.senderId === currentUserId
-                        ? "bg-indigo-100 text-indigo-900 dark:bg-indigo-900 dark:text-indigo-100"
-                        : "bg-gray-100 text-gray-900 dark:bg-gray-800 dark:text-gray-100"
+                    className={`flex max-w-[80%] ${
+                      isCurrent ? "flex-row-reverse" : "flex-row"
                     }`}
                   >
-                    <div className="flex flex-col">
-                      <span className="text-xs text-gray-500 dark:text-gray-400 mb-1">
-                        {formatTime(message.timestamp)}
-                      </span>
-                      <span>{message.content}</span>
+                    {/* Avatar */}
+                    <div className="flex-shrink-0">
+                      {!isCurrent ? (
+                        user?.avatar ? (
+                          <img
+                            src={user.avatar}
+                            alt={user.name}
+                            className="h-8 w-8 rounded-full"
+                          />
+                        ) : (
+                          <div className="h-8 w-8 rounded-full bg-indigo-100 flex items-center justify-center">
+                            <User className="h-4 w-4 text-indigo-600" />
+                          </div>
+                        )
+                      ) : null}
+                    </div>
+
+                    {/* Message bubble */}
+                    <div
+                      className={`mx-2 px-4 py-2 rounded-lg ${
+                        isCurrent
+                          ? "bg-indigo-100 text-indigo-900 dark:bg-indigo-900 dark:text-indigo-100"
+                          : "bg-gray-100 text-gray-900 dark:bg-gray-800 dark:text-gray-100"
+                      }`}
+                    >
+                      <div className="flex flex-col">
+                        <span className="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                          {formatTime(message.timestamp)}
+                        </span>
+                        <span>{message.content}</span>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
             <div ref={messagesEndRef} />
           </div>
         )}

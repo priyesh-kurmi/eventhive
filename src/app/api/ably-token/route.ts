@@ -21,17 +21,24 @@ async function handleTokenRequest(request: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Get userId from session
-    const userId = session.user.id;
+    // Make sure Ably API key is configured
+    if (!process.env.ABLY_API_KEY) {
+      console.error('ABLY_API_KEY is not configured');
+      return NextResponse.json(
+        { error: 'Ably API key not configured' },
+        { status: 500 }
+      );
+    }
 
-    // Get clientId from query params or request body
-    const url = new URL(request.url);
-    let clientId = url.searchParams.get('clientId') || userId;
+    // Get a unique identifier for the user - email is most reliable
+    const userIdentifier = session.user.email || 
+                           session.user.id || 
+                           `user-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
 
     // Create an Ably token request
-    const client = new Ably.Rest(process.env.ABLY_API_KEY!);
+    const client = new Ably.Rest(process.env.ABLY_API_KEY);
     const tokenRequestData = await client.auth.createTokenRequest({
-      clientId: clientId,
+      clientId: userIdentifier,
     });
 
     return NextResponse.json(tokenRequestData);

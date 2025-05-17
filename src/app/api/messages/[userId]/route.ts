@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/db';
 import DirectMessage from '@/models/DirectMessage';
 import User from '@/models/User';
@@ -8,20 +8,25 @@ import * as Ably from 'ably';
 import { getDirectMessageChannelName } from '@/lib/ably';
 import mongoose from 'mongoose';
 
+// Helper function to extract userId from URL
+function extractUserIdFromUrl(req: NextRequest): string {
+  const url = new URL(req.url);
+  const pathParts = url.pathname.split('/');
+  return pathParts[pathParts.length - 1]; // Get the last part of the URL path
+}
+
 // Get message history between current user and specified user
-export async function GET(
-  request: Request,
-  context: { params: { userId: string } }
-) {
+export async function GET(req: NextRequest) {
   try {
+    // Extract userId from URL instead of using params
+    const targetUserId = extractUserIdFromUrl(req);
+    
     // Get session from NextAuth
     const session = await getServerSession(authOptions);
     
     if (!session?.user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-
-    const { userId } = context.params;
 
     await connectToDatabase();
     
@@ -35,7 +40,7 @@ export async function GET(
 
     // Check if users are connected
     const areConnected = currentUser.connections?.some(
-      (id: mongoose.Types.ObjectId) => id.toString() === userId
+      (id: mongoose.Types.ObjectId) => id.toString() === targetUserId
     );
 
     if (!areConnected) {
@@ -48,39 +53,48 @@ export async function GET(
     // Get chat messages between the two users
     const messages = await DirectMessage.find({
       $or: [
-        { senderId: currentUserId, receiverId: userId },
-        { senderId: userId, receiverId: currentUserId }
+        { senderId: currentUserId, receiverId: targetUserId },
+        { senderId: targetUserId, receiverId: currentUserId }
       ]
     }).sort({ timestamp: 1 });
 
     // Get the other user's details
-    const otherUser = await User.findById(userId).select('_id name username avatar');
+    const otherUser = await User.findById(targetUserId).select('_id name username avatar');
     if (!otherUser) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
     // Mark all messages from the other user as read
     await DirectMessage.updateMany(
-      { senderId: userId, receiverId: currentUserId, read: false },
+      { senderId: targetUserId, receiverId: currentUserId, read: false },
       { read: true }
     );
 
     return NextResponse.json({
-      messages: messages.map(msg => ({
-        id: msg._id.toString(),
-        senderId: msg.senderId.toString(),
-        receiverId: msg.receiverId.toString(),
-        content: msg.content,
-        timestamp: msg.timestamp,
-        read: msg.read
-      })),
-      user: {
-        id: otherUser._id.toString(),
-        name: otherUser.name,
-        username: otherUser.username,
-        avatar: otherUser.avatar
-      }
-    });
+  messages: messages.map(msg => {
+    // Convert IDs to strings for consistent comparison
+    const senderIdString = msg.senderId.toString();
+    const currentUserIdString = currentUserId.toString();
+    
+    return {
+      id: msg._id.toString(),
+      senderId: senderIdString,
+      receiverId: msg.receiverId.toString(),
+      content: msg.content,
+      timestamp: msg.timestamp,
+      read: msg.read,
+      // Add this critical flag to each message
+      isCurrentUser: senderIdString === currentUserIdString
+    };
+  }),
+  user: {
+    id: otherUser._id.toString(),
+    name: otherUser.name,
+    username: otherUser.username,
+    avatar: otherUser.avatar
+  },
+  currentUserId: currentUserId
+});
     
   } catch (error) {
     console.error("Error fetching messages:", error);
@@ -92,20 +106,21 @@ export async function GET(
 }
 
 // Send a new message
-export async function POST(
-  request: Request,
-  context: { params: { userId: string } }
-) {
+export async function POST(req: NextRequest) {
   try {
+    // Extract userId from URL instead of using params
+    const targetUserId = extractUserIdFromUrl(req);
+    
     // Get session from NextAuth
     const session = await getServerSession(authOptions);
     
     if (!session?.user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-
-    const { userId } = context.params;
-    const { content } = await request.json();
+    
+    // Parse the request body
+    const body = await req.json();
+    const { content } = body;
 
     if (!content || typeof content !== 'string' || content.trim() === '') {
       return NextResponse.json(
@@ -126,7 +141,7 @@ export async function POST(
 
     // Check if users are connected
     const areConnected = currentUser.connections?.some(
-      (id: mongoose.Types.ObjectId) => id.toString() === userId
+      (id: mongoose.Types.ObjectId) => id.toString() === targetUserId
     );
 
     if (!areConnected) {
@@ -137,7 +152,7 @@ export async function POST(
     }
 
     // Get the receiver's details
-    const receiver = await User.findById(userId);
+    const receiver = await User.findById(targetUserId);
     if (!receiver) {
       return NextResponse.json({ error: 'Receiver not found' }, { status: 404 });
     }
@@ -145,7 +160,7 @@ export async function POST(
     // Create a new message
     const newMessage = new DirectMessage({
       senderId: currentUserId,
-      receiverId: userId,
+      receiverId: targetUserId,
       content: content.trim(),
       timestamp: Date.now(),
       read: false
@@ -155,24 +170,44 @@ export async function POST(
 
     // Publish to Ably
     const ably = new Ably.Rest(process.env.ABLY_API_KEY!);
-    const channel = ably.channels.get(getDirectMessageChannelName(currentUserId, userId));
     
-    await channel.publish('new-message', {
+    // Get the channel names
+    const senderChannelName = getDirectMessageChannelName(currentUserId, targetUserId);
+    const receiverChannelName = getDirectMessageChannelName(targetUserId, currentUserId);
+    
+    // Create the channels
+    const senderChannel = ably.channels.get(senderChannelName);
+    const receiverChannel = ably.channels.get(receiverChannelName);
+    
+    const messageData = {
       id: newMessage._id.toString(),
       senderId: currentUserId,
-      receiverId: userId,
+      receiverId: targetUserId,
       senderName: currentUser.name,
       content: content.trim(),
       timestamp: newMessage.timestamp,
       avatar: currentUser.avatar,
       read: false
-    });
+    };
+    
+    console.log('Publishing message to channels:', senderChannelName, receiverChannelName);
+    
+    // Publish to both channels
+    try {
+      await Promise.all([
+        senderChannel.publish('new-message', messageData),
+        receiverChannel.publish('new-message', messageData)
+      ]);
+      console.log('Message published successfully to both channels');
+    } catch (error) {
+      console.error('Error publishing to Ably:', error);
+    }
 
     return NextResponse.json({ 
       message: {
         id: newMessage._id.toString(),
         senderId: currentUserId,
-        receiverId: userId,
+        receiverId: targetUserId,
         content: newMessage.content,
         timestamp: newMessage.timestamp,
         read: newMessage.read
