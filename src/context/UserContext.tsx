@@ -9,6 +9,7 @@ type UserData = {
   name?: string;
   email?: string;
   clerkId?: string;
+  username?: string;
   profession?: string;
   company?: string;
   skills?: string[];

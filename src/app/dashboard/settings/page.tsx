@@ -1,10 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { 
-  Bell, 
-  Shield, 
-  User, 
+import {
+  Bell,
+  Shield,
+  User,
   LogOut,
   Save,
   Check,
@@ -15,22 +15,42 @@ import {
   Tag,
   Languages,
   Edit,
-  X
+  X,
 } from "lucide-react";
 import { Tabs } from "@ark-ui/react";
 import ImageUpload from "@/components/onboarding/ImageUpload";
 
 // Skill and Interest options
 const SKILL_OPTIONS = [
-  "JavaScript", "TypeScript", "React", "Next.js", "Node.js", "Python", 
-  "Data Science", "Machine Learning", "UI/UX", "Product Management",
-  "DevOps", "Cloud Computing", "Blockchain", "Mobile Development"
+  "JavaScript",
+  "TypeScript",
+  "React",
+  "Next.js",
+  "Node.js",
+  "Python",
+  "Data Science",
+  "Machine Learning",
+  "UI/UX",
+  "Product Management",
+  "DevOps",
+  "Cloud Computing",
+  "Blockchain",
+  "Mobile Development",
 ];
 
 const INTEREST_OPTIONS = [
-  "Web Development", "AI & Machine Learning", "Blockchain", "IoT", 
-  "Cloud Computing", "Mobile Development", "UI/UX Design", "Data Science",
-  "Cybersecurity", "Product Management", "Startup", "Open Source"
+  "Web Development",
+  "AI & Machine Learning",
+  "Blockchain",
+  "IoT",
+  "Cloud Computing",
+  "Mobile Development",
+  "UI/UX Design",
+  "Data Science",
+  "Cybersecurity",
+  "Product Management",
+  "Startup",
+  "Open Source",
 ];
 
 export default function SettingsPage() {
@@ -39,11 +59,15 @@ export default function SettingsPage() {
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [modalField, setModalField] = useState("");
-  
+  const [checkingUsername, setCheckingUsername] = useState(false);
+  const [usernameAvailable, setUsernameAvailable] = useState(true);
+  const [initialProfileData, setInitialProfileData] = useState<any>(null);
+
   // User profile data state
   const [profileData, setProfileData] = useState({
     name: "",
     email: "",
+    username: "", // Added username field
     bio: "",
     profession: "",
     company: "",
@@ -59,20 +83,21 @@ export default function SettingsPage() {
     customTags: "",
     eventsAttending: "",
   });
-  
+
   const [completionPercentage, setCompletionPercentage] = useState(0);
-  
+
   // Load user data on component mount
   useEffect(() => {
     const fetchUserData = async () => {
       try {
         const response = await fetch("/api/user/profile");
-        
+
         if (response.ok) {
           const userData = await response.json();
-          setProfileData({
+          const updatedProfileData = {
             name: userData.name || "",
             email: userData.email || "",
+            username: userData.username || "", // Include username
             bio: userData.bio || "",
             profession: userData.profession || "",
             company: userData.company || "",
@@ -87,7 +112,10 @@ export default function SettingsPage() {
             languages: userData.languages || "",
             customTags: userData.customTags || "",
             eventsAttending: userData.eventsAttending || "",
-          });
+          };
+
+          setProfileData(updatedProfileData);
+          setInitialProfileData(updatedProfileData);
         }
       } catch (error) {
         console.error("Error fetching user data:", error);
@@ -95,75 +123,135 @@ export default function SettingsPage() {
         setLoading(false);
       }
     };
-    
+
     fetchUserData();
   }, []);
-  
+
   // Calculate profile completion percentage
   useEffect(() => {
     if (loading) return;
-    
+
     const fields = [
-      'name', 'bio', 'profession', 'company', 'avatar', 'skills', 
-      'interests', 'yearsExperience', 'location', 'linkedin', 
-      'website', 'languages', 'customTags', 'eventsAttending'
+      "name",
+      "username",
+      "bio",
+      "profession",
+      "company",
+      "avatar",
+      "skills",
+      "interests",
+      "yearsExperience",
+      "location",
+      "linkedin",
+      "website",
+      "languages",
+      "customTags",
+      "eventsAttending",
     ];
-    
+
     let filledFields = 0;
-    
-    fields.forEach(field => {
+
+    fields.forEach((field) => {
       const value = profileData[field as keyof typeof profileData];
-      if (value && 
-         (typeof value === 'string' && value.trim() !== '') || 
-         (Array.isArray(value) && value.length > 0)) {
+      if (
+        (value && typeof value === "string" && value.trim() !== "") ||
+        (Array.isArray(value) && value.length > 0)
+      ) {
         filledFields++;
       }
     });
-    
+
     setCompletionPercentage(Math.round((filledFields / fields.length) * 100));
   }, [profileData, loading]);
-  
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
     const { name, value } = e.target;
-    setProfileData(prev => ({
+    setProfileData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
+
+    // Check username availability when typing in username field
+    if (name === "username") {
+      // Debounce the username check
+      const timer = setTimeout(() => {
+        if (value && value.length >= 3) {
+          checkUsernameAvailability(value);
+        }
+      }, 500);
+
+      return () => clearTimeout(timer);
+    }
   };
-  
+
+  // Check if username is available
+  const checkUsernameAvailability = async (username: string) => {
+    if (!username || username === initialProfileData?.username) {
+      setUsernameAvailable(true);
+      return;
+    }
+
+    // First validate the format before checking with server
+    if (!/^[a-zA-Z0-9]+$/.test(username)) {
+      setUsernameAvailable(false);
+      return;
+    }
+
+    setCheckingUsername(true);
+
+    try {
+      const response = await fetch("/api/user/check-username", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ username }),
+      });
+
+      const data = await response.json();
+      setUsernameAvailable(data.available);
+    } catch (error) {
+      console.error("Error checking username:", error);
+    } finally {
+      setCheckingUsername(false);
+    }
+  };
+
   const handleAvatarChange = (url: string) => {
-    setProfileData(prev => ({
+    setProfileData((prev) => ({
       ...prev,
-      avatar: url
+      avatar: url,
     }));
   };
-  
+
   const handleToggleSelect = (field: "skills" | "interests", value: string) => {
-    setProfileData(prev => {
+    setProfileData((prev) => {
       const current = [...prev[field]];
-      
+
       if (current.includes(value)) {
-        return { ...prev, [field]: current.filter(item => item !== value) };
+        return { ...prev, [field]: current.filter((item) => item !== value) };
       } else {
         return { ...prev, [field]: [...current, value] };
       }
     });
   };
-  
+
   // Modal control functions
   const openModal = (field: string) => {
     setModalField(field);
     setModalOpen(true);
   };
-  
+
   const closeModal = () => {
     setModalOpen(false);
   };
-  
+
   // Handle form submission
   const handleSave = async () => {
     setLoading(true);
-    
+
     try {
       const response = await fetch("/api/user/update", {
         method: "PUT",
@@ -172,12 +260,14 @@ export default function SettingsPage() {
         },
         body: JSON.stringify(profileData),
       });
-      
+
       if (response.ok) {
         setSaveSuccess(true);
         setTimeout(() => {
           setSaveSuccess(false);
         }, 3000);
+        // Update the initial data after successful save
+        setInitialProfileData({ ...profileData });
       } else {
         console.error("Error updating profile:", await response.text());
       }
@@ -205,9 +295,9 @@ export default function SettingsPage() {
                 <X className="h-5 w-5" />
               </button>
             </div>
-            
+
             <div className="space-y-4">
-              {modalField === 'skills' && (
+              {modalField === "skills" && (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Select Skills
@@ -230,8 +320,8 @@ export default function SettingsPage() {
                   </div>
                 </div>
               )}
-              
-              {modalField === 'interests' && (
+
+              {modalField === "interests" && (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Select Interests
@@ -241,7 +331,9 @@ export default function SettingsPage() {
                       <button
                         key={interest}
                         type="button"
-                        onClick={() => handleToggleSelect("interests", interest)}
+                        onClick={() =>
+                          handleToggleSelect("interests", interest)
+                        }
                         className={`px-3 py-1 rounded-full text-sm ${
                           profileData.interests.includes(interest)
                             ? "bg-indigo-100 text-indigo-800 border-indigo-200 dark:bg-indigo-900 dark:text-indigo-200"
@@ -254,10 +346,13 @@ export default function SettingsPage() {
                   </div>
                 </div>
               )}
-              
-              {modalField === 'bio' && (
+
+              {modalField === "bio" && (
                 <div>
-                  <label htmlFor="modal-bio" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  <label
+                    htmlFor="modal-bio"
+                    className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                  >
                     Short Bio
                   </label>
                   <textarea
@@ -271,42 +366,90 @@ export default function SettingsPage() {
                   />
                 </div>
               )}
-              
-              {(modalField === 'name' || 
-                modalField === 'profession' || 
-                modalField === 'company' || 
-                modalField === 'yearsExperience' || 
-                modalField === 'location' || 
-                modalField === 'linkedin' || 
-                modalField === 'website' || 
-                modalField === 'languages' || 
-                modalField === 'customTags' || 
-                modalField === 'eventsAttending') && (
+
+              {modalField === "username" && (
                 <div>
-                  <label htmlFor={`modal-${modalField}`} className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    {modalField.charAt(0).toUpperCase() + modalField.slice(1).replace(/([A-Z])/g, ' $1')}
+                  <label
+                    htmlFor="modal-username"
+                    className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                  >
+                    Username
+                  </label>
+                  <input
+                    id="modal-username"
+                    name="username"
+                    type="text"
+                    value={profileData.username}
+                    onChange={handleInputChange}
+                    onBlur={() =>
+                      checkUsernameAvailability(profileData.username)
+                    }
+                    className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-700 dark:text-white"
+                  />
+                  {checkingUsername && (
+                    <span className="text-xs text-gray-400">checking...</span>
+                  )}
+                  {!checkingUsername && profileData.username && (
+                    <span
+                      className={`text-xs ${
+                        usernameAvailable ? "text-green-500" : "text-red-500"
+                      }`}
+                    >
+                      {usernameAvailable
+                        ? "✓ available"
+                        : "✗ taken or invalid format"}
+                    </span>
+                  )}
+                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                    Username can only contain letters and numbers (no spaces or
+                    special characters)
+                  </p>
+                </div>
+              )}
+
+              {(modalField === "name" ||
+                modalField === "profession" ||
+                modalField === "company" ||
+                modalField === "yearsExperience" ||
+                modalField === "location" ||
+                modalField === "linkedin" ||
+                modalField === "website" ||
+                modalField === "languages" ||
+                modalField === "customTags" ||
+                modalField === "eventsAttending") && (
+                <div>
+                  <label
+                    htmlFor={`modal-${modalField}`}
+                    className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                  >
+                    {modalField.charAt(0).toUpperCase() +
+                      modalField.slice(1).replace(/([A-Z])/g, " $1")}
                   </label>
                   <input
                     id={`modal-${modalField}`}
                     name={modalField}
                     type="text"
-                    value={profileData[modalField as keyof typeof profileData] as string}
+                    value={
+                      profileData[
+                        modalField as keyof typeof profileData
+                      ] as string
+                    }
                     onChange={handleInputChange}
                     className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-700 dark:text-white"
                   />
                 </div>
               )}
-              
-              {modalField === 'avatar' && (
+
+              {modalField === "avatar" && (
                 <div className="flex flex-col items-center">
-                  <ImageUpload 
-                    value={profileData.avatar} 
-                    onChange={handleAvatarChange} 
+                  <ImageUpload
+                    value={profileData.avatar}
+                    onChange={handleAvatarChange}
                   />
                 </div>
               )}
             </div>
-            
+
             <div className="mt-6 flex space-x-3 justify-end">
               <button
                 onClick={closeModal}
@@ -327,44 +470,47 @@ export default function SettingsPage() {
           </div>
         </div>
       )}
-      
-      <Tabs.Root value={activeTab} onValueChange={details => setActiveTab(details.value)}>
+
+      <Tabs.Root
+        value={activeTab}
+        onValueChange={(details) => setActiveTab(details.value)}
+      >
         <Tabs.List className="flex space-x-1 rounded-xl bg-gray-100 dark:bg-gray-800 p-1 mb-8">
-          <Tabs.Trigger 
+          <Tabs.Trigger
             value="profile"
             className={`w-full py-2.5 text-sm font-medium rounded-lg transition-colors duration-200 flex items-center justify-center ${
-              activeTab === 'profile' 
-                ? 'bg-white dark:bg-gray-700 text-indigo-600 dark:text-indigo-400 shadow-sm' 
-                : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100'
+              activeTab === "profile"
+                ? "bg-white dark:bg-gray-700 text-indigo-600 dark:text-indigo-400 shadow-sm"
+                : "text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100"
             }`}
           >
             <User className="h-4 w-4 mr-2" />
             Profile
           </Tabs.Trigger>
-          <Tabs.Trigger 
+          <Tabs.Trigger
             value="notifications"
             className={`w-full py-2.5 text-sm font-medium rounded-lg transition-colors duration-200 flex items-center justify-center ${
-              activeTab === 'notifications' 
-                ? 'bg-white dark:bg-gray-700 text-indigo-600 dark:text-indigo-400 shadow-sm' 
-                : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100'
+              activeTab === "notifications"
+                ? "bg-white dark:bg-gray-700 text-indigo-600 dark:text-indigo-400 shadow-sm"
+                : "text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100"
             }`}
           >
             <Bell className="h-4 w-4 mr-2" />
             Notifications
           </Tabs.Trigger>
-          <Tabs.Trigger 
+          <Tabs.Trigger
             value="privacy"
             className={`w-full py-2.5 text-sm font-medium rounded-lg transition-colors duration-200 flex items-center justify-center ${
-              activeTab === 'privacy' 
-                ? 'bg-white dark:bg-gray-700 text-indigo-600 dark:text-indigo-400 shadow-sm' 
-                : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100'
+              activeTab === "privacy"
+                ? "bg-white dark:bg-gray-700 text-indigo-600 dark:text-indigo-400 shadow-sm"
+                : "text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100"
             }`}
           >
             <Shield className="h-4 w-4 mr-2" />
             Privacy
           </Tabs.Trigger>
         </Tabs.List>
-        
+
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden">
           <Tabs.Content value="profile">
             <div className="p-6">
@@ -381,46 +527,53 @@ export default function SettingsPage() {
                   )}
                 </div>
                 <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
-                  <div 
-                    className="bg-indigo-600 dark:bg-indigo-500 h-2.5 rounded-full transition-all duration-500 ease-out" 
+                  <div
+                    className="bg-indigo-600 dark:bg-indigo-500 h-2.5 rounded-full transition-all duration-500 ease-out"
                     style={{ width: `${completionPercentage}%` }}
                   ></div>
                 </div>
               </div>
-              
+
               <div className="flex justify-between items-center mb-6">
                 <h3 className="text-lg font-medium text-gray-900 dark:text-white">
                   Profile Information
                 </h3>
               </div>
-              
+
               {/* Profile Image Upload */}
               <div className="mb-8 flex flex-col items-center relative group">
                 <div className="w-24 h-24 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden mb-3 flex items-center justify-center relative">
                   {profileData.avatar ? (
-                    <img src={profileData.avatar} alt="Profile" className="w-full h-full object-cover" />
+                    <img
+                      src={profileData.avatar}
+                      alt="Profile"
+                      className="w-full h-full object-cover"
+                    />
                   ) : (
                     <User className="h-12 w-12 text-gray-400" />
                   )}
-                  <button 
-                    onClick={() => openModal('avatar')}
+                  <button
+                    onClick={() => openModal("avatar")}
                     className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 flex items-center justify-center transition-all duration-200 opacity-0 group-hover:opacity-100"
                   >
                     <Edit className="h-6 w-6 text-white" />
                   </button>
                 </div>
-                <button 
-                  onClick={() => openModal('avatar')}
+                <button
+                  onClick={() => openModal("avatar")}
                   className="text-sm text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300"
                 >
                   Change Photo
                 </button>
               </div>
-              
+
               <div className="grid grid-cols-1 gap-6 sm:grid-cols-6">
                 {/* Basic Information */}
                 <div className="sm:col-span-3 relative group">
-                  <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  <label
+                    htmlFor="name"
+                    className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                  >
                     Full Name
                   </label>
                   <div className="relative">
@@ -432,17 +585,71 @@ export default function SettingsPage() {
                       onChange={handleInputChange}
                       className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-700 dark:text-white pr-10"
                     />
-                    <button 
-                      onClick={() => openModal('name')}
+                    <button
+                      onClick={() => openModal("name")}
                       className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
                     >
                       <Edit className="h-4 w-4" />
                     </button>
                   </div>
                 </div>
-                
+
+                {/* Username field - NEW */}
+                <div className="sm:col-span-3 relative group">
+                  <label
+                    htmlFor="username"
+                    className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                  >
+                    Username
+                    <span className="text-indigo-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      name="username"
+                      id="username"
+                      value={profileData.username}
+                      onChange={handleInputChange}
+                      onBlur={() =>
+                        checkUsernameAvailability(profileData.username)
+                      }
+                      className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-700 dark:text-white pr-10"
+                    />
+                    <button
+                      onClick={() => openModal("username")}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+                    >
+                      <Edit className="h-4 w-4" />
+                    </button>
+                    {checkingUsername && (
+                      <span className="absolute right-10 top-2 text-xs text-gray-400">
+                        checking...
+                      </span>
+                    )}
+                    {!checkingUsername && profileData.username && (
+                      <span
+                        className={`absolute right-10 top-2 text-xs ${
+                          usernameAvailable ? "text-green-500" : "text-red-500"
+                        }`}
+                      >
+                        {usernameAvailable ? "✓ available" : "✗ taken"}
+                      </span>
+                    )}
+                  </div>
+                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                    Your unique username that others will use to find you
+                  </p>
+                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                    Your unique username - only letters and numbers allowed (no
+                    spaces)
+                  </p>
+                </div>
+
                 <div className="sm:col-span-3">
-                  <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  <label
+                    htmlFor="email"
+                    className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                  >
                     Email Address
                   </label>
                   <input
@@ -457,9 +664,12 @@ export default function SettingsPage() {
                     Email is managed by your authentication provider
                   </p>
                 </div>
-                
+
                 <div className="sm:col-span-6 relative group">
-                  <label htmlFor="bio" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  <label
+                    htmlFor="bio"
+                    className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                  >
                     Short Bio
                   </label>
                   <div className="relative">
@@ -472,8 +682,8 @@ export default function SettingsPage() {
                       className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-700 dark:text-white pr-10"
                       placeholder="Tell us a bit about yourself..."
                     />
-                    <button 
-                      onClick={() => openModal('bio')}
+                    <button
+                      onClick={() => openModal("bio")}
                       className="absolute right-2 top-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
                     >
                       <Edit className="h-4 w-4" />
@@ -483,10 +693,13 @@ export default function SettingsPage() {
                     Brief description for your profile (1-2 lines recommended).
                   </p>
                 </div>
-                
+
                 {/* Professional Information */}
                 <div className="sm:col-span-3 relative group">
-                  <label htmlFor="profession" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  <label
+                    htmlFor="profession"
+                    className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                  >
                     Profession/Role
                   </label>
                   <div className="relative">
@@ -499,17 +712,20 @@ export default function SettingsPage() {
                       placeholder="e.g., Software Engineer, Marketing Head"
                       className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-700 dark:text-white pr-10"
                     />
-                    <button 
-                      onClick={() => openModal('profession')}
+                    <button
+                      onClick={() => openModal("profession")}
                       className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
                     >
                       <Edit className="h-4 w-4" />
                     </button>
                   </div>
                 </div>
-                
+
                 <div className="sm:col-span-3 relative group">
-                  <label htmlFor="company" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  <label
+                    htmlFor="company"
+                    className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                  >
                     Company/Organization
                   </label>
                   <div className="relative">
@@ -522,18 +738,22 @@ export default function SettingsPage() {
                       placeholder="e.g., Acme Inc."
                       className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-700 dark:text-white pr-10"
                     />
-                    <button 
-                      onClick={() => openModal('company')}
+                    <button
+                      onClick={() => openModal("company")}
                       className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
                     >
                       <Edit className="h-4 w-4" />
                     </button>
                   </div>
                 </div>
-                
+
+                {/* Rest of the form fields (remaining as they are) */}
                 <div className="sm:col-span-3 relative group">
-                  <label htmlFor="yearsExperience" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    <Briefcase className="h-4 w-4 inline mr-1" /> 
+                  <label
+                    htmlFor="yearsExperience"
+                    className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                  >
+                    <Briefcase className="h-4 w-4 inline mr-1" />
                     Years of Experience
                   </label>
                   <div className="relative">
@@ -546,18 +766,21 @@ export default function SettingsPage() {
                       placeholder="e.g., 5"
                       className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-700 dark:text-white pr-10"
                     />
-                    <button 
-                      onClick={() => openModal('yearsExperience')}
+                    <button
+                      onClick={() => openModal("yearsExperience")}
                       className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
                     >
                       <Edit className="h-4 w-4" />
                     </button>
                   </div>
                 </div>
-                
+
                 <div className="sm:col-span-3 relative group">
-                  <label htmlFor="location" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    <MapPin className="h-4 w-4 inline mr-1" /> 
+                  <label
+                    htmlFor="location"
+                    className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                  >
+                    <MapPin className="h-4 w-4 inline mr-1" />
                     Location
                   </label>
                   <div className="relative">
@@ -570,23 +793,23 @@ export default function SettingsPage() {
                       placeholder="e.g., San Francisco, CA"
                       className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-700 dark:text-white pr-10"
                     />
-                    <button 
-                      onClick={() => openModal('location')}
+                    <button
+                      onClick={() => openModal("location")}
                       className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
                     >
                       <Edit className="h-4 w-4" />
                     </button>
                   </div>
                 </div>
-                
+
                 {/* Skills and Interests */}
                 <div className="sm:col-span-6 relative group">
                   <div className="flex justify-between items-center mb-2">
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                       Skills
                     </label>
-                    <button 
-                      onClick={() => openModal('skills')}
+                    <button
+                      onClick={() => openModal("skills")}
                       className="text-xs text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 flex items-center"
                     >
                       <Edit className="h-3 w-3 mr-1" />
@@ -604,18 +827,20 @@ export default function SettingsPage() {
                         </span>
                       ))
                     ) : (
-                      <span className="text-sm text-gray-500 dark:text-gray-400">No skills selected</span>
+                      <span className="text-sm text-gray-500 dark:text-gray-400">
+                        No skills selected
+                      </span>
                     )}
                   </div>
                 </div>
-                
+
                 <div className="sm:col-span-6 relative group">
                   <div className="flex justify-between items-center mb-2">
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                       Key Interests
                     </label>
-                    <button 
-                      onClick={() => openModal('interests')}
+                    <button
+                      onClick={() => openModal("interests")}
                       className="text-xs text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 flex items-center"
                     >
                       <Edit className="h-3 w-3 mr-1" />
@@ -633,14 +858,19 @@ export default function SettingsPage() {
                         </span>
                       ))
                     ) : (
-                      <span className="text-sm text-gray-500 dark:text-gray-400">No interests selected</span>
+                      <span className="text-sm text-gray-500 dark:text-gray-400">
+                        No interests selected
+                      </span>
                     )}
                   </div>
                 </div>
-                
+
                 {/* Online Presence */}
                 <div className="sm:col-span-3 relative group">
-                  <label htmlFor="linkedin" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  <label
+                    htmlFor="linkedin"
+                    className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                  >
                     LinkedIn URL
                   </label>
                   <div className="relative">
@@ -653,18 +883,21 @@ export default function SettingsPage() {
                       placeholder="https://linkedin.com/in/yourprofile"
                       className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-700 dark:text-white pr-10"
                     />
-                    <button 
-                      onClick={() => openModal('linkedin')}
+                    <button
+                      onClick={() => openModal("linkedin")}
                       className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
                     >
                       <Edit className="h-4 w-4" />
                     </button>
                   </div>
                 </div>
-                
+
                 <div className="sm:col-span-3 relative group">
-                  <label htmlFor="website" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    <Globe className="h-4 w-4 inline mr-1" /> 
+                  <label
+                    htmlFor="website"
+                    className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                  >
+                    <Globe className="h-4 w-4 inline mr-1" />
                     Website
                   </label>
                   <div className="relative">
@@ -677,19 +910,22 @@ export default function SettingsPage() {
                       placeholder="https://yourwebsite.com"
                       className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-700 dark:text-white pr-10"
                     />
-                    <button 
-                      onClick={() => openModal('website')}
+                    <button
+                      onClick={() => openModal("website")}
                       className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
                     >
                       <Edit className="h-4 w-4" />
                     </button>
                   </div>
                 </div>
-                
+
                 {/* Additional Info */}
                 <div className="sm:col-span-3 relative group">
-                  <label htmlFor="languages" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    <Languages className="h-4 w-4 inline mr-1" /> 
+                  <label
+                    htmlFor="languages"
+                    className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                  >
+                    <Languages className="h-4 w-4 inline mr-1" />
                     Preferred Languages
                   </label>
                   <div className="relative">
@@ -702,18 +938,21 @@ export default function SettingsPage() {
                       placeholder="e.g., English, Spanish, French"
                       className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-700 dark:text-white pr-10"
                     />
-                    <button 
-                      onClick={() => openModal('languages')}
+                    <button
+                      onClick={() => openModal("languages")}
                       className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
                     >
                       <Edit className="h-4 w-4" />
                     </button>
                   </div>
                 </div>
-                
+
                 <div className="sm:col-span-3 relative group">
-                  <label htmlFor="eventsAttending" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    <Calendar className="h-4 w-4 inline mr-1" /> 
+                  <label
+                    htmlFor="eventsAttending"
+                    className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                  >
+                    <Calendar className="h-4 w-4 inline mr-1" />
                     Event(s) Attending
                   </label>
                   <div className="relative">
@@ -726,18 +965,21 @@ export default function SettingsPage() {
                       placeholder="e.g., DevCon 2023, TechMeetup"
                       className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-700 dark:text-white pr-10"
                     />
-                    <button 
-                      onClick={() => openModal('eventsAttending')}
+                    <button
+                      onClick={() => openModal("eventsAttending")}
                       className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
                     >
                       <Edit className="h-4 w-4" />
                     </button>
                   </div>
                 </div>
-                
+
                 <div className="sm:col-span-6 relative group">
-                  <label htmlFor="customTags" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    <Tag className="h-4 w-4 inline mr-1" /> 
+                  <label
+                    htmlFor="customTags"
+                    className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                  >
+                    <Tag className="h-4 w-4 inline mr-1" />
                     Custom Tags
                   </label>
                   <div className="relative">
@@ -750,33 +992,52 @@ export default function SettingsPage() {
                       placeholder="e.g., Open to Freelance, Founder, Remote Worker"
                       className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-700 dark:text-white pr-10"
                     />
-                    <button 
-                      onClick={() => openModal('customTags')}
+                    <button
+                      onClick={() => openModal("customTags")}
                       className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
                     >
                       <Edit className="h-4 w-4" />
                     </button>
                   </div>
                   <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                    Separate tags with commas. These will be used for better matchmaking.
+                    Separate tags with commas. These will be used for better
+                    matchmaking.
                   </p>
                 </div>
               </div>
-              
+
               <div className="mt-6">
                 <button
                   type="button"
                   onClick={handleSave}
-                  disabled={loading}
+                  disabled={loading || !usernameAvailable}
                   className={`inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:ring-offset-gray-800 ${
-                    loading ? 'opacity-70 cursor-not-allowed' : ''
+                    loading || !usernameAvailable
+                      ? "opacity-70 cursor-not-allowed"
+                      : ""
                   }`}
                 >
                   {loading ? (
                     <span className="inline-flex items-center">
-                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      <svg
+                        className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                      >
+                        <circle
+                          className="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                        ></circle>
+                        <path
+                          className="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                        ></path>
                       </svg>
                       Saving...
                     </span>
@@ -792,16 +1053,33 @@ export default function SettingsPage() {
                     </>
                   )}
                 </button>
+                {!usernameAvailable && profileData.username && (
+                  <p className="mt-2 text-sm text-red-500">
+                    Please choose a different username before saving
+                  </p>
+                )}
               </div>
             </div>
           </Tabs.Content>
-          
+
           <Tabs.Content value="notifications">
-            {/* Keep existing notifications content */}
+            {/* Notification settings content */}
+            <div className="p-6">
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-6">
+                Notification Preferences
+              </h3>
+              {/* Notification settings would go here */}
+            </div>
           </Tabs.Content>
-          
+
           <Tabs.Content value="privacy">
-            {/* Keep existing privacy content */}
+            {/* Privacy settings content */}
+            <div className="p-6">
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-6">
+                Privacy Settings
+              </h3>
+              {/* Privacy settings would go here */}
+            </div>
           </Tabs.Content>
         </div>
       </Tabs.Root>

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/db";
 import User from "@/models/User";
 import { auth, currentUser } from "@clerk/nextjs/server";
+import { generateRandomUsername, ensureUniqueUsername } from "@/lib/utils";
 
 export async function POST(request: Request) {
   try {
@@ -34,7 +35,10 @@ export async function POST(request: Request) {
 
     // Get request body
     const body = await request.json();
-    const { name, profession, company, skills, interests, bio, avatar, eventPreferences, clerkId } = body;
+    const { 
+      name, profession, company, skills, interests, bio, avatar, 
+      eventPreferences, clerkId, username 
+    } = body;
 
     // Validate clerkId matches authenticated user
     if (clerkId !== userId) {
@@ -50,13 +54,33 @@ export async function POST(request: Request) {
     // Check if user already exists
     const existingUser = await User.findOne({ clerkId });
 
+    let finalUsername = username?.trim();
+
+if (!finalUsername) {
+  // Generate a random username if none provided
+  let baseUsername = generateRandomUsername();
+  // Remove any underscores from the generated username
+  baseUsername = baseUsername.replace(/_/g, '');
+  finalUsername = await ensureUniqueUsername(baseUsername, User);
+} else {
+  // Validate username format
+  if (!/^[a-zA-Z0-9]+$/.test(finalUsername)) {
+    return NextResponse.json(
+      { error: "Username can only contain letters and numbers (no spaces or special characters)" },
+      { status: 400 }
+    );
+  }
+  // Make sure provided username is unique
+  finalUsername = await ensureUniqueUsername(finalUsername, User);
+}
+
     if (existingUser) {
       // Update existing user
       const updatedUser = await User.findOneAndUpdate(
         { clerkId },
         {
           name,
-          email, // Add email from Clerk
+          email,
           profession,
           company,
           skills,
@@ -64,6 +88,7 @@ export async function POST(request: Request) {
           bio,
           avatar,
           eventPreferences,
+          username: finalUsername
         },
         { new: true }
       );
@@ -77,8 +102,9 @@ export async function POST(request: Request) {
     // Create new user
     const newUser = new User({
       name,
-      email, // Add email from Clerk
+      email,
       clerkId,
+      username: finalUsername,
       profession,
       company,
       skills,
@@ -101,4 +127,4 @@ export async function POST(request: Request) {
       { status: 500 }
     );
   }
-}``
+}
