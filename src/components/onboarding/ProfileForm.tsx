@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { useUser } from "@/context/UserContext";
 import ImageUpload from "./ImageUpload";
 
@@ -135,7 +136,9 @@ const styles = {
     cursor: "pointer",
     backgroundColor: "#313131",
     color: "#fff",
-    border: "1px solid #414141",
+    borderWidth: "1px",
+    borderStyle: "solid",
+    borderColor: "#414141",
   },
   selectedOption: {
     backgroundColor: "rgba(232, 28, 255, 0.2)",
@@ -209,11 +212,11 @@ if (typeof window !== "undefined") {
 }
 
 export default function ProfileForm({
-  clerkId,
+  userId,
   isMinimal = false,
   requiredFields = ["name", "profession", "bio", "skills", "interests"],
 }: {
-  clerkId: string;
+  userId: string;
   isMinimal?: boolean;
   requiredFields?: string[];
 }) {
@@ -378,49 +381,82 @@ export default function ProfileForm({
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  // Find the handleSubmit function in your ProfileForm component and update it:
+// Add this near the top of your component
+const { update: updateSession } = useSession();
 
-    if (!validateForm()) {
-      return;
-    }
+// Add this helper function
+const setRedirectCookie = () => {
+  document.cookie = "skipOnboardingCheck=true; path=/; max-age=30";
+};
 
-    setIsSubmitting(true);
+// Update your handleSubmit function
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
 
-    try {
-      const response = await fetch("/api/user/create", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          ...formData,
-          clerkId,
-        }),
-      });
+  if (!validateForm()) {
+    return;
+  }
 
-      const data = await response.json();
+  setIsSubmitting(true);
 
-      if (response.ok) {
-        // Update global context
+  try {
+    // Use the onboarding endpoint
+    const response = await fetch("/api/user/onboarding", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        name: formData.name,
+        bio: formData.bio,
+        username: formData.username,
+        profession: formData.profession,
+        avatar: formData.avatar,
+        skills: formData.skills,
+        interests: formData.interests,
+        company: formData.company
+      }),
+    });
+
+    const data = await response.json();
+
+    if (response.ok) {
+      console.log("✅ Onboarding successful, preparing redirect");
+      
+      // Update user data in context
+      if (setUserData) {
         setUserData(data.user);
-        // Redirect to dashboard
-        router.push("/dashboard");
-      } else {
-        // Show error using toast if available
-        console.error("Error:", data.error);
-        if (typeof window !== "undefined" && window.toast) {
-          window.toast(
-            <div className="font-medium">Failed to save profile</div>
-          );
-        }
       }
-    } catch (error) {
-      console.error("Error submitting form:", error);
-    } finally {
-      setIsSubmitting(false);
+      
+      try {
+        // Update NextAuth session
+        await updateSession({ isOnboarded: true });
+      } catch (e) {
+        console.error("Failed to update session:", e);
+      }
+      
+      // Set cookie to bypass middleware check
+      setRedirectCookie();
+      
+      // Try all redirect methods
+      try {
+        router.push('/dashboard');
+      } catch (e) {
+        console.error("Router push failed, trying window.location:", e);
+        window.location.href = "/dashboard";
+      }
+    } else {
+      console.error("Error:", data.error, "Details:", data.details);
+      setErrors({ general: data.error || "Failed to save profile" });
     }
-  };
+  } catch (error) {
+    console.error("Error submitting form:", error);
+    setErrors({ general: "Network error. Please try again." });
+  } finally {
+    setIsSubmitting(false);
+  }
+};
 
   return (
     <div style={styles.formContainer}>

@@ -1,17 +1,19 @@
 import mongoose, { Document, Schema } from 'mongoose';
 
 export interface IUser extends Document {
-  name: string;
+  name?: string;
   email: string;
-  clerkId: string;
-  username: string; // New username field
+  password?: string;
+  username?: string;
   profession?: string;
   company?: string;
   bio?: string;
   avatar?: string;
   skills?: string[];
   interests?: string[];
-  events?: mongoose.Types.ObjectId[];
+  isOnboarded: boolean;
+  authProvider: 'credentials' | 'google';
+  oAuthId?: string; // For Google auth
   // Extended fields
   yearsExperience?: string;
   location?: string;
@@ -19,7 +21,8 @@ export interface IUser extends Document {
   website?: string;
   languages?: string;
   customTags?: string;
-  eventsAttending?: string;
+  joinedEvents?: mongoose.Types.ObjectId[];
+  createdEvents?: mongoose.Types.ObjectId[];
   eventPreferences?: {
     eventTypes?: string[];
     formats?: string[];
@@ -31,17 +34,49 @@ export interface IUser extends Document {
 
 const UserSchema = new Schema<IUser>(
   {
-    name: { type: String, required: true },
-    email: { type: String, required: true },
-    clerkId: { type: String, required: true, unique: true },
-    username: { type: String, required: true, unique: true }, // Unique username
+    name: { 
+      type: String,
+      required: false 
+    },
+    email: { 
+      type: String, 
+      required: true,
+      unique: true 
+    },
+    password: { 
+      type: String,
+      required: false // Not required for Google auth
+    },
+    username: { 
+      type: String, 
+      required: false,
+      unique: true 
+    },
+    oAuthId: {
+      type: String,
+      required: false
+    },
     profession: { type: String },
     company: { type: String },
-    bio: { type: String },
-    avatar: { type: String },
+    bio: { 
+      type: String,
+      default: "" 
+    },
+    avatar: { 
+      type: String,
+      default: "" 
+    },
     skills: [{ type: String }],
     interests: [{ type: String }],
-    events: [{ type: Schema.Types.ObjectId, ref: 'Event' }],
+    isOnboarded: {
+      type: Boolean,
+      default: false
+    },
+    authProvider: {
+      type: String,
+      enum: ["credentials", "google"],
+      default: "credentials"
+    },
     // Extended fields
     yearsExperience: { type: String },
     location: { type: String },
@@ -49,7 +84,14 @@ const UserSchema = new Schema<IUser>(
     website: { type: String },
     languages: { type: String },
     customTags: { type: String },
-    eventsAttending: { type: String },
+    joinedEvents: [{ 
+      type: Schema.Types.ObjectId, 
+      ref: 'Event' 
+    }],
+    createdEvents: [{ 
+      type: Schema.Types.ObjectId, 
+      ref: 'Event' 
+    }],
     eventPreferences: {
       eventTypes: [{ type: String }],
       formats: [{ type: String }],
@@ -59,5 +101,7 @@ const UserSchema = new Schema<IUser>(
   { timestamps: true }
 );
 
+// Prevent duplicate model compilation error in development
 const User = mongoose.models.User || mongoose.model<IUser>('User', UserSchema);
+
 export default User;

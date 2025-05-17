@@ -1,9 +1,9 @@
-
 import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/db";
 import Event from "@/models/Event";
 import User from "@/models/User";
-import { auth, currentUser } from "@clerk/nextjs/server";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
 // Function to generate a random event code
 function generateEventCode() {
@@ -19,8 +19,10 @@ function generateEventCode() {
 
 export async function POST(request: Request) {
   try {
-    const { userId } = await auth();
-    if (!userId) {
+    // Get session from NextAuth instead of Clerk
+    const session = await getServerSession(authOptions);
+    
+    if (!session?.user) {
       return NextResponse.json(
         { error: "Unauthorized" },
         { status: 401 }
@@ -30,8 +32,8 @@ export async function POST(request: Request) {
     // Connect to database
     await connectToDatabase();
 
-    // Get user from database to use as creator
-    const dbUser = await User.findOne({ clerkId: userId });
+    // Get user from database using email instead of clerkId
+    const dbUser = await User.findOne({ email: session.user.email });
     if (!dbUser) {
       return NextResponse.json(
         { error: "User not found in database", needsOnboarding: true },

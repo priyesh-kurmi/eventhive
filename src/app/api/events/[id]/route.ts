@@ -1,25 +1,26 @@
-// EXISTING FILE: c:\Users\kpriy\OneDrive\Desktop\event\event-hive\src\app\api\events\[id]\route.ts
-// Update this file to include isOrganizer flag in the response
 import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/db";
 import Event from "@/models/Event";
 import User from "@/models/User";
-import { auth } from "@clerk/nextjs/server";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
 export async function GET(
   request: Request,
   context: { params: { id: string } }
 ) {
   try {
-    const { userId } = await auth();
-    if (!userId) {
+    // Get session from NextAuth instead of Clerk
+    const session = await getServerSession(authOptions);
+    
+    if (!session?.user) {
       return NextResponse.json(
         { error: "Unauthorized" },
         { status: 401 }
       );
     }
 
-    const { id } = await context.params;
+    const { id } = context.params;
     
     // Connect to database
     await connectToDatabase();
@@ -38,7 +39,8 @@ export async function GET(
     }
 
     // Get current user to determine if they're attending or organizer
-    const dbUser = await User.findOne({ clerkId: userId });
+    // Use email instead of clerkId for lookup
+    const dbUser = await User.findOne({ email: session.user.email });
     if (!dbUser) {
       return NextResponse.json(
         { error: "User not found in database", needsOnboarding: true },
@@ -62,6 +64,136 @@ export async function GET(
     console.error("Error fetching event:", error);
     return NextResponse.json(
       { error: "Failed to fetch event", details: String(error) },
+      { status: 500 }
+    );
+  }
+}
+
+// You should also implement the PUT/PATCH and DELETE methods with similar updates
+export async function PUT(
+  request: Request,
+  context: { params: { id: string } }
+) {
+  try {
+    // Get session from NextAuth
+    const session = await getServerSession(authOptions);
+    
+    if (!session?.user) {
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
+    }
+
+    const { id } = context.params;
+    
+    // Connect to database
+    await connectToDatabase();
+    
+    // Get user from database
+    const dbUser = await User.findOne({ email: session.user.email });
+    if (!dbUser) {
+      return NextResponse.json(
+        { error: "User not found in database" },
+        { status: 404 }
+      );
+    }
+    
+    // Get event
+    const event = await Event.findById(id);
+    if (!event) {
+      return NextResponse.json(
+        { error: "Event not found" },
+        { status: 404 }
+      );
+    }
+    
+    // Check if user is event creator
+    if (event.createdBy.toString() !== dbUser._id.toString()) {
+      return NextResponse.json(
+        { error: "Only the event creator can update this event" },
+        { status: 403 }
+      );
+    }
+    
+    // Get request body and update event
+    const updateData = await request.json();
+    
+    const updatedEvent = await Event.findByIdAndUpdate(
+      id, 
+      updateData, 
+      { new: true }
+    );
+    
+    return NextResponse.json({
+      message: "Event updated successfully",
+      event: updatedEvent
+    });
+  } catch (error) {
+    console.error("Error updating event:", error);
+    return NextResponse.json(
+      { error: "Failed to update event", details: String(error) },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(
+  request: Request,
+  context: { params: { id: string } }
+) {
+  try {
+    // Get session from NextAuth
+    const session = await getServerSession(authOptions);
+    
+    if (!session?.user) {
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
+    }
+
+    const { id } = context.params;
+    
+    // Connect to database
+    await connectToDatabase();
+    
+    // Get user from database
+    const dbUser = await User.findOne({ email: session.user.email });
+    if (!dbUser) {
+      return NextResponse.json(
+        { error: "User not found in database" },
+        { status: 404 }
+      );
+    }
+    
+    // Get event
+    const event = await Event.findById(id);
+    if (!event) {
+      return NextResponse.json(
+        { error: "Event not found" },
+        { status: 404 }
+      );
+    }
+    
+    // Check if user is event creator
+    if (event.createdBy.toString() !== dbUser._id.toString()) {
+      return NextResponse.json(
+        { error: "Only the event creator can delete this event" },
+        { status: 403 }
+      );
+    }
+    
+    // Delete event
+    await Event.findByIdAndDelete(id);
+    
+    return NextResponse.json({
+      message: "Event deleted successfully"
+    });
+  } catch (error) {
+    console.error("Error deleting event:", error);
+    return NextResponse.json(
+      { error: "Failed to delete event", details: String(error) },
       { status: 500 }
     );
   }

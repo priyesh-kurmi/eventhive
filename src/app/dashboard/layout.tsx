@@ -1,10 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useAuth } from "@clerk/nextjs";
+import { useSession, signOut } from "next-auth/react";
 import { redirect, usePathname } from "next/navigation";
 import Link from "next/link";
-import { UserButton } from "@clerk/nextjs";
+import Image from "next/image";
 import {
   Home,
   Calendar,
@@ -14,11 +14,14 @@ import {
   SunIcon,
   BellIcon,
   X,
+  LogOut,
+  User,
 } from "lucide-react";
 import { Dialog } from "@ark-ui/react";
 import clsx from "clsx";
 import { useTheme } from "@/context/ThemeContext";
 import { MessageSquare, Users } from "lucide-react";
+import { useUser } from "@/context/UserContext";
 
 const navItems = [
   { name: "Overview", href: "/dashboard", icon: Home },
@@ -28,24 +31,91 @@ const navItems = [
   { name: "Settings", href: "/dashboard/settings", icon: Settings },
 ];
 
+// Custom user button to replace Clerk's UserButton
+function CustomUserButton({ afterSignOutUrl = "/" }) {
+  const { userData } = useUser();
+  const [isOpen, setIsOpen] = useState(false);
+  
+  const handleSignOut = async () => {
+    await signOut({ redirect: true, callbackUrl: afterSignOutUrl });
+  };
+  
+  return (
+    <div className="relative">
+      <button 
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex items-center justify-center rounded-full overflow-hidden w-8 h-8 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+      >
+        {userData?.avatar ? (
+          <Image 
+            src={userData.avatar} 
+            alt="Profile" 
+            width={32} 
+            height={32}
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <div className="w-full h-full bg-indigo-600 flex items-center justify-center text-white">
+            {userData?.name?.charAt(0) || userData?.email?.charAt(0) || "U"}
+          </div>
+        )}
+      </button>
+      
+      {isOpen && (
+        <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg py-1 z-50 border border-gray-200 dark:border-gray-700">
+          <div className="px-4 py-2 border-b border-gray-200 dark:border-gray-700">
+            <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+              {userData?.name || "User"}
+            </p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+              {userData?.email || ""}
+            </p>
+          </div>
+          <Link 
+            href="/dashboard/profile" 
+            className="px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center"
+            onClick={() => setIsOpen(false)}
+          >
+            <User className="w-4 h-4 mr-2" />
+            Profile
+          </Link>
+          <button 
+            onClick={handleSignOut}
+            className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center"
+          >
+            <LogOut className="w-4 h-4 mr-2" />
+            Sign out
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const { userId, isLoaded } = useAuth();
+  const { data: session, status } = useSession();
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
   const { darkMode, toggleDarkMode } = useTheme();
 
   // Handle authentication
   useEffect(() => {
-    if (isLoaded && !userId) {
+    if (status === 'unauthenticated') {
       redirect("/sign-in");
     }
-  }, [userId, isLoaded]);
+  }, [status]);
 
-  if (!isLoaded) return null;
+  if (status === 'loading') {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen transition-colors duration-200 dark:bg-gray-900 dark:text-white">
@@ -95,7 +165,7 @@ export default function DashboardLayout({
           </div>
 
           <div className="flex items-center p-4 border-t border-gray-200 dark:border-gray-700">
-            <UserButton afterSignOutUrl="/" />
+            <CustomUserButton afterSignOutUrl="/" />
             <div className="ml-3">
               <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
                 Account
@@ -128,7 +198,7 @@ export default function DashboardLayout({
             <span className="absolute top-0 right-0 h-2 w-2 rounded-full bg-red-500"></span>
           </button>
           
-          <UserButton afterSignOutUrl="/" />
+          <CustomUserButton afterSignOutUrl="/" />
         </div>
       </div>
 
@@ -151,7 +221,7 @@ export default function DashboardLayout({
               <MoonIcon className="h-5 w-5 text-gray-700 dark:text-gray-300" />
             )}
           </button>
-          <UserButton afterSignOutUrl="/" />
+          <CustomUserButton afterSignOutUrl="/" />
           <button
             type="button"
             className="p-2 text-gray-500 dark:text-gray-400"

@@ -1,14 +1,16 @@
-// UPDATE FILE: c:\Users\kpriy\OneDrive\Desktop\event\event-hive\src\app\api\events\join\route.ts
 import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/db";
 import Event from "@/models/Event";
 import User from "@/models/User";
-import { auth } from "@clerk/nextjs/server";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
 export async function POST(request: Request) {
   try {
-    const { userId } = await auth();
-    if (!userId) {
+    // Get session from NextAuth instead of Clerk
+    const session = await getServerSession(authOptions);
+    
+    if (!session?.user) {
       return NextResponse.json(
         { error: "Unauthorized" },
         { status: 401 }
@@ -18,8 +20,8 @@ export async function POST(request: Request) {
     // Connect to database
     await connectToDatabase();
 
-    // Get user from database
-    const dbUser = await User.findOne({ clerkId: userId });
+    // Get user from database using email instead of clerkId
+    const dbUser = await User.findOne({ email: session.user.email });
     if (!dbUser) {
       return NextResponse.json(
         { error: "User not found in database", needsOnboarding: true },
@@ -27,11 +29,27 @@ export async function POST(request: Request) {
       );
     }
 
-    // Get event ID from request body
-    const { eventId } = await request.json();
+    // Get request body - could be eventId or eventCode
+    const body = await request.json();
+    let eventId = body.eventId;
+    const eventCode = body.eventCode;
+
+    // If no eventId but eventCode is provided, find by code
+    if (!eventId && eventCode) {
+      const eventByCode = await Event.findOne({ code: eventCode });
+      if (!eventByCode) {
+        return NextResponse.json(
+          { error: "Invalid event code" },
+          { status: 404 }
+        );
+      }
+      eventId = eventByCode._id;
+    }
+
+    // Validate eventId
     if (!eventId) {
       return NextResponse.json(
-        { error: "Event ID is required" },
+        { error: "Event ID or code is required" },
         { status: 400 }
       );
     }
@@ -46,13 +64,28 @@ export async function POST(request: Request) {
     }
 
     // Check if user is already attending
-    const isAlreadyAttending: boolean = event.attendees.some(
-      (attendeeId: string) => attendeeId.toString() === dbUser._id.toString()
+    interface IEvent {
+      _id: string;
+      attendees: (string | { toString(): string })[];
+      [key: string]: any;
+    }
+
+    interface IUser {
+      _id: string;
+      email: string;
+      [key: string]: any;
+    }
+
+    const eventTyped = event as IEvent;
+    const dbUserTyped = dbUser as IUser;
+
+    const isAlreadyAttending: boolean = eventTyped.attendees.some(
+      (attendeeId: string | { toString(): string }) => attendeeId.toString() === dbUserTyped._id.toString()
     );
 
     if (isAlreadyAttending) {
       return NextResponse.json(
-        { message: "You are already attending this event", alreadyJoined: true },
+        { message: "You are already attending this event", alreadyJoined: true, eventId },
         { status: 200 }
       );
     }
@@ -63,8 +96,15 @@ export async function POST(request: Request) {
       { $push: { attendees: dbUser._id } }
     );
 
+    // Also add event to user's events list if needed
+    await User.findByIdAndUpdate(
+      dbUser._id,
+      { $addToSet: { events: eventId } }
+    );
+
     return NextResponse.json({ 
-      message: "Successfully joined event" 
+      message: "Successfully joined event",
+      eventId
     });
   } catch (error) {
     console.error("Error joining event:", error);

@@ -1,49 +1,76 @@
-import { auth } from "@clerk/nextjs/server";
+import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/db";
 import User from "@/models/User";
-import { NextResponse } from "next/server";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
 export async function PUT(request: Request) {
   try {
-    const { userId } = await auth();
-    
-    if (!userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    // Check authentication with NextAuth
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
     }
+
+    // Get update data from request body
+    const updateData = await request.json();
     
+    // Connect to database
     await connectToDatabase();
     
-    const user = await User.findOne({ clerkId: userId });
-    
-    if (!user) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    // Check if username is being updated and is unique
+    if (updateData.username) {
+      const existingUser = await User.findOne({ 
+        username: updateData.username,
+        _id: { $ne: session.user.id }
+      });
+      
+      if (existingUser) {
+        return NextResponse.json(
+          { error: "Username already taken" },
+          { status: 400 }
+        );
+      }
     }
     
-    const data = await request.json();
+    // Update user
+    const updatedUser = await User.findByIdAndUpdate(
+      session.user.id,
+      { $set: updateData },
+      { new: true }
+    );
     
-    // Update the fields in the User model
-    user.name = data.name || user.name;
-    user.bio = data.bio || user.bio;
-    user.profession = data.profession || user.profession;
-    user.company = data.company || user.company;
-    user.avatar = data.avatar || user.avatar;
-    user.skills = data.skills || user.skills;
-    user.interests = data.interests || user.interests;
+    if (!updatedUser) {
+      return NextResponse.json(
+        { error: "User not found" },
+        { status: 404 }
+      );
+    }
     
-    // Extended fields - need to update the User model
-    if (data.yearsExperience) user.yearsExperience = data.yearsExperience;
-    if (data.location) user.location = data.location;
-    if (data.linkedin) user.linkedin = data.linkedin;
-    if (data.website) user.website = data.website;
-    if (data.languages) user.languages = data.languages;
-    if (data.customTags) user.customTags = data.customTags;
-    if (data.eventsAttending) user.eventsAttending = data.eventsAttending;
+    return NextResponse.json({ 
+      message: "Profile updated successfully",
+      user: {
+        id: updatedUser._id,
+        name: updatedUser.name,
+        email: updatedUser.email,
+        username: updatedUser.username,
+        bio: updatedUser.bio,
+        avatar: updatedUser.avatar,
+        profession: updatedUser.profession,
+        company: updatedUser.company,
+        skills: updatedUser.skills,
+        interests: updatedUser.interests
+      }
+    });
     
-    await user.save();
-    
-    return NextResponse.json(user);
   } catch (error) {
-    console.error("Error updating user profile:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    console.error("Error updating user:", error);
+    return NextResponse.json(
+      { error: "Failed to update profile" },
+      { status: 500 }
+    );
   }
 }

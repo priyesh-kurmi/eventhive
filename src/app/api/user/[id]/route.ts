@@ -1,23 +1,23 @@
 import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/db";
 import User from "@/models/User";
-import { auth } from "@clerk/nextjs/server";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import mongoose from "mongoose";
 
 export async function GET(
   request: Request,
   context: { params: { id: string } }
 ) {
-  // Properly await the params
-  const params = await Promise.resolve(context.params);
-  const id = params.id;
+  // Get the id from params
+  const id = context.params.id;
   
   try {
-    // Use the extracted id variable
     console.log("Fetching user with ID:", id);
     
-    // Check authentication
-    const { userId } = await auth();
-    if (!userId) {
+    // Check authentication with NextAuth
+    const session = await getServerSession(authOptions);
+    if (!session?.user) {
       console.log("Unauthorized access attempt");
       return NextResponse.json(
         { error: "Unauthorized" },
@@ -25,13 +25,13 @@ export async function GET(
       );
     }
 
+    // Connect to database
     try {
-      // Connect to database
       console.log("Connecting to database...");
       await connectToDatabase();
       console.log("Connected to database successfully");
     } catch (dbError) {
-      // Error handling code...
+      console.error("Database connection error:", dbError);
       return NextResponse.json(
         { 
           error: "Database connection failed", 
@@ -42,9 +42,22 @@ export async function GET(
       );
     }
 
-    // Find user by clerkId - use id variable
-    console.log("Finding user with clerkId:", id);
-    const user = await User.findOne({ clerkId: id });
+    // Validate if the ID is a valid MongoDB ObjectId
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      console.log("Invalid MongoDB ObjectId format:", id);
+      return NextResponse.json(
+        { 
+          error: "Invalid user ID format", 
+          code: "invalid_id",
+          needsOnboarding: true 
+        },
+        { status: 400 }
+      );
+    }
+
+    // Find user by MongoDB _id
+    console.log("Finding user with _id:", id);
+    const user = await User.findById(id);
     
     console.log("User found:", !!user);
 
@@ -65,9 +78,12 @@ export async function GET(
     return NextResponse.json({ user });
     
   } catch (error) {
-    // Error handling code...
+    console.error("Error fetching user:", error);
     return NextResponse.json(
-      { error: "Failed to fetch user", details: error instanceof Error ? error.message : "Unknown error" },
+      { 
+        error: "Failed to fetch user", 
+        details: error instanceof Error ? error.message : "Unknown error" 
+      },
       { status: 500 }
     );
   }

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import * as Ably from 'ably';
-import { auth } from '@clerk/nextjs/server';
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
 // Handle both GET and POST methods for token requests
 export async function GET(request: Request) {
@@ -14,11 +15,14 @@ export async function POST(request: Request) {
 // Shared function to handle token generation
 async function handleTokenRequest(request: Request) {
   try {
-    // Verify the user is authenticated
-    const { userId } = await auth();
-    if (!userId) {
+    // Verify the user is authenticated using NextAuth
+    const session = await getServerSession(authOptions);
+    if (!session?.user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+
+    // Get userId from session
+    const userId = session.user.id;
 
     // Get clientId from query params or request body
     const url = new URL(request.url);

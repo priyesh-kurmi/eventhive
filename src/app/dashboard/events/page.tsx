@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@clerk/nextjs";
 import { 
   Clock, 
   MapPin, 
@@ -16,6 +15,8 @@ import {
 } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 import { Tabs, Dialog } from "@ark-ui/react";
+import { useSession } from "next-auth/react";
+import { useUser } from "@/context/UserContext";
 
 interface Event {
   _id: string;
@@ -36,7 +37,11 @@ interface Event {
 
 export default function EventsPage() {
   const router = useRouter();
-  const { userId } = useAuth();
+  const { data: session } = useSession(); // Changed from Clerk
+  const { userData } = useUser(); // Added for more complete user data
+  const userId = userData?._id || userData?.id || session?.user?.id; // Use any available ID
+
+
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("ongoing");

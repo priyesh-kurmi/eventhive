@@ -1,13 +1,14 @@
-import { auth } from "@clerk/nextjs/server";
+import { getServerSession } from "next-auth/next";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { CalendarDays, Users, ArrowRight, Globe } from "lucide-react";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
 export default async function Home() {
-  const { userId } = await auth();
+  const session = await getServerSession(authOptions);
   
   // If user is logged in, redirect to dashboard
-  if (userId) {
+  if (session?.user) {
     redirect("/dashboard");
   }
 

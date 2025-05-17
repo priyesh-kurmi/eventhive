@@ -3,7 +3,8 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useParams } from "next/navigation";
-import { useAuth, useUser } from "@clerk/nextjs";
+import { useSession } from "next-auth/react"; // Changed from Clerk
+import { useUser } from "@/context/UserContext";
 import { AblyProvider } from "@/components/providers/AblyProvider";
 import { 
   Calendar, 
@@ -33,11 +34,16 @@ interface EventParams {
 
 export default function EventDetailPage({ params }: EventParams) {
   const router = useRouter();
-  const { userId } = useAuth();
-  const { user } = useUser();
+  const { data: session } = useSession(); // Changed from Clerk
+  const { userData } = useUser(); // Use your context
   const routeParams = useParams();
   const id = routeParams.id as string;
   const { darkMode } = useTheme();
+
+  // Get user ID from multiple possible sources
+  const userId = userData?._id || userData?.id || session?.user?.id;
+  // Get user's name
+  const userName = userData?.name || session?.user?.name || "Anonymous User"; 
   
   const [event, setEvent] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -384,7 +390,7 @@ export default function EventDetailPage({ params }: EventParams) {
                     <EventChat 
                       eventId={id} 
                       userId={userId} 
-                      userName={user?.fullName || user?.username || "Anonymous"} 
+                      userName={userName} 
                     />
                   </AblyProvider>
                 ) : (

@@ -1,22 +1,22 @@
-import { auth, currentUser } from "@clerk/nextjs/server";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
 export async function getCurrentUserId() {
-  const { userId } = await auth();
-  return userId;
+  const session = await getServerSession(authOptions);
+  return session?.user?.id;
 }
 
 export async function getCurrentUserDetails() {
-  const user = await currentUser();
+  const session = await getServerSession(authOptions);
   
-  if (!user) {
+  if (!session?.user) {
     return null;
   }
   
   return {
-    id: user.id,
-    firstName: user.firstName,
-    lastName: user.lastName,
-    email: user.emailAddresses[0]?.emailAddress,
-    imageUrl: user.imageUrl,
+    id: session.user.id,
+    name: session.user.name,
+    email: session.user.email,
+    imageUrl: session.user.image,
   };
 }

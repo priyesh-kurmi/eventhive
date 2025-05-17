@@ -1,14 +1,15 @@
-// UPDATE FILE: c:\Users\kpriy\OneDrive\Desktop\event\event-hive\src\app\api\events\join-by-code\route.ts
 import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/db";
 import Event from "@/models/Event";
 import User from "@/models/User";
-import { auth } from "@clerk/nextjs/server";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
 export async function POST(request: Request) {
   try {
-    const { userId } = await auth();
-    if (!userId) {
+    const session = await getServerSession(authOptions);
+    
+    if (!session || !session.user?.id) {
       return NextResponse.json(
         { error: "Unauthorized" },
         { status: 401 }
@@ -18,8 +19,8 @@ export async function POST(request: Request) {
     // Connect to database
     await connectToDatabase();
 
-    // Get user from database
-    const dbUser = await User.findOne({ clerkId: userId });
+    // Get user from database - replaced clerkId with direct ID
+    const dbUser = await User.findById(session.user.id);
     if (!dbUser) {
       return NextResponse.json(
         { error: "User not found in database", needsOnboarding: true },
@@ -70,13 +71,16 @@ export async function POST(request: Request) {
       { $push: { attendees: dbUser._id } }
     );
 
-    return NextResponse.json({ 
-      message: "Successfully joined event",
-      event: {
-        _id: event._id,
-        title: event.title
-      }
-    });
+    return NextResponse.json(
+      { 
+        message: "Successfully joined event",
+        event: {
+          _id: event._id,
+          title: event.title
+        }
+      },
+      { status: 200 }
+    );
   } catch (error) {
     console.error("Error joining event by code:", error);
     return NextResponse.json(

@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@clerk/nextjs";
+import { useSession } from "next-auth/react"; // Changed from Clerk to NextAuth
+import { useUser } from "@/context/UserContext";
 import { 
   Calendar, 
   Clock, 
@@ -20,7 +21,11 @@ import { CalendarDate, getLocalTimeZone } from "@internationalized/date";
 
 export default function CreateEventPage() {
   const router = useRouter();
-  const { userId, isLoaded } = useAuth();
+  const { data: session, status } = useSession(); // Changed from Clerk's useAuth
+  const { userData } = useUser(); // Get user data from context
+  
+  // Get user ID from multiple possible sources
+  const userId = userData?._id || userData?.id || session?.user?.id;
 
   const [formData, setFormData] = useState({
     title: "",
@@ -43,12 +48,12 @@ export default function CreateEventPage() {
   // Date picker state
   const [selectedDate, setSelectedDate] = useState<CalendarDate | null>(null);
   
-  // Effect to check authentication
+  // Effect to check authentication - updated for NextAuth
   useEffect(() => {
-    if (isLoaded && !userId) {
+    if (status === 'unauthenticated') {
       router.push("/sign-in");
     }
-  }, [isLoaded, userId, router]);
+  }, [status, router]);
 
   // Handle date selection
   useEffect(() => {
@@ -186,7 +191,8 @@ export default function CreateEventPage() {
     }
   };
 
-  if (!isLoaded) {
+  // Optionally, you can show a loading spinner while authentication is loading
+  if (status === "loading") {
     return <div className="flex justify-center items-center min-h-[60vh]">
       <div className="animate-pulse flex flex-col items-center space-y-4">
         <div className="rounded-full bg-gray-200 dark:bg-gray-700 h-12 w-12"></div>

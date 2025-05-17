@@ -1,7 +1,9 @@
 import { NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/db';
 import Message from '@/models/Message';
-import { auth, currentUser } from '@clerk/nextjs/server';
+import User from '@/models/User';
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import * as Ably from 'ably';
 import { getEventChannelName } from '@/lib/ably';
 
@@ -10,12 +12,14 @@ export async function GET(
   context: { params: { id: string } }
 ) {
   try {
-    const { userId } = await auth();
-    if (!userId) {
+    // Get session from NextAuth
+    const session = await getServerSession(authOptions);
+    
+    if (!session?.user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { id } = await context.params;
+    const { id } = context.params;
     
     await connectToDatabase();
 
@@ -39,14 +43,14 @@ export async function POST(
   context: { params: { id: string } }
 ) {
   try {
-    const { userId } = await auth();
-    if (!userId) {
+    // Get session from NextAuth
+    const session = await getServerSession(authOptions);
+    
+    if (!session?.user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const user = await currentUser();
-
-    const { id } = await context.params;
+    const { id } = context.params;
     const { content } = await request.json();
 
     if (!content || typeof content !== 'string' || content.trim() === '') {
@@ -57,15 +61,25 @@ export async function POST(
     }
 
     await connectToDatabase();
+    
+    // Get user from database to get full details
+    const dbUser = await User.findOne({ email: session.user.email });
+    
+    // Determine sender ID - use database ID if available, otherwise fallback to session ID
+    const senderId = dbUser?._id.toString() || session.user.id;
+    
+    // Get user's name and avatar
+    const senderName = dbUser?.name || session.user.name || "Unknown User";
+    const avatar = dbUser?.avatar || session.user.image || null;
 
     // Create new message
     const newMessage = new Message({
       eventId: id,
-      senderId: userId,
-      senderName: user?.fullName || user?.username || "Unknown User",
+      senderId: senderId,
+      senderName: senderName,
       content: content.trim(),
       timestamp: Date.now(),
-      avatar: user?.imageUrl || null
+      avatar: avatar
     });
 
     await newMessage.save();
@@ -77,11 +91,11 @@ export async function POST(
     await channel.publish('new-message', {
       id: newMessage._id.toString(),
       eventId: id,
-      senderId: userId,
-      senderName: user?.fullName || user?.username || "Unknown User",
+      senderId: senderId,
+      senderName: senderName,
       content: content.trim(),
       timestamp: newMessage.timestamp,
-      avatar: user?.imageUrl || null
+      avatar: avatar
     });
 
     return NextResponse.json({ message: newMessage });

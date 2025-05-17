@@ -1,13 +1,14 @@
 import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/db";
 import User from "@/models/User";
-import { auth } from "@clerk/nextjs/server";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
 export async function POST(request: Request) {
   try {
-    // Check authentication
-    const { userId } = await auth();
-    if (!userId) {
+    // Check authentication with NextAuth
+    const session = await getServerSession(authOptions);
+    if (!session?.user) {
       return NextResponse.json(
         { error: "Unauthorized" },
         { status: 401 }
@@ -24,7 +25,6 @@ export async function POST(request: Request) {
       );
     }
 
-    // ADD THE NEW VALIDATION HERE:
     // Validate username format
     if (!/^[a-zA-Z0-9]+$/.test(username)) {
       return NextResponse.json({ 

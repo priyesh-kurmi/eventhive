@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useUser } from "@clerk/nextjs";
+import { useSession } from "next-auth/react";
 import { Tabs } from "@ark-ui/react";
 import { 
   CalendarIcon, 
@@ -12,10 +12,15 @@ import {
   Settings,
   UsersIcon 
 } from "lucide-react";
+import { useUser } from "@/context/UserContext";
 
 export default function DashboardPage() {
-  const { user } = useUser();
-  const firstName = user?.firstName || "there";
+  const { data: session } = useSession();
+  const { userData } = useUser();
+  
+  // Get first name from full name or use fallback
+  const fullName = userData?.name || session?.user?.name || "";
+  const firstName = fullName.split(' ')[0] || "there";
 
   return (
     <div className="transition-colors duration-200 dark:bg-gray-900 dark:text-white">
