@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import * as Ably from "ably";
 import { useAbly } from "@/components/providers/AblyProvider";
+import { useSession } from "next-auth/react";
 
 // Use the correct message type from Ably
 type Message = Ably.Message;
@@ -12,33 +13,55 @@ export function useChannel(
   channelName: string,
   callbackOnMessage?: MessageCallback
 ) {
-  const ably = useAbly();
+  const { data: session } = useSession();
   const [channel, setChannel] = useState<Ably.RealtimeChannel | null>(null);
+  
+  // Use try/catch to handle the case when useAbly might throw an error
+  let ably: Ably.Realtime | null = null;
+  try {
+    ably = useAbly();
+  } catch (error) {
+    // Silently handle the error when Ably is not available yet
+    console.log("Ably client not available yet");
+  }
 
   // In your useEffect for subscribing:
-
   useEffect(() => {
-    const newChannel = ably.channels.get(channelName);
-    setChannel(newChannel);
+    if (!ably || !session?.user) return;
+    
+    try {
+      const newChannel = ably.channels.get(channelName);
+      setChannel(newChannel);
 
-    if (callbackOnMessage) {
-      // Subscribe to ALL message events, not just 'new-message'
-      // This ensures we catch all message types
-      newChannel.subscribe(callbackOnMessage);
+      if (callbackOnMessage) {
+        newChannel.subscribe(callbackOnMessage);
+      }
 
-      // Or specify the exact event:
-      // newChannel.subscribe('new-message', callbackOnMessage);
+      return () => {
+        // Safe cleanup function that checks channel state
+        if (newChannel) {
+          if (callbackOnMessage) {
+            newChannel.unsubscribe(callbackOnMessage);
+          }
+          
+          // Don't try to release the channel, just let Ably's built-in
+          // cleanup handle it when the client disconnects
+          // This avoids the "was attaching" error
+        }
+      };
+    } catch (error) {
+      console.error("Error setting up Ably channel:", error);
     }
-
-    return () => {
-      newChannel.unsubscribe();
-    };
-  }, [ably, channelName, callbackOnMessage]);
+  }, [ably, channelName, callbackOnMessage, session?.user]);
 
   const publish = useCallback(
     async (message: any) => {
       if (channel) {
-        await channel.publish("new-message", message);
+        try {
+          await channel.publish("new-message", message);
+        } catch (error) {
+          console.error("Error publishing message:", error);
+        }
       }
     },
     [channel]

@@ -5,7 +5,7 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useUser } from "@/context/UserContext";
 import UserSearch from "@/components/dashboard/UserSearch";
-import { Search, Users, UserPlus, Clock } from "lucide-react";
+import { Search, Users, UserPlus, Clock, MessageSquare } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 
 type UserSearchResult = {
@@ -289,7 +289,7 @@ type Connection = {
   profession?: string;
 };
 
-// Update in page.tsx - Replace existing ConnectionCard
+// Updated ConnectionCard with chat button
 function ConnectionCard({ connection, onDelete }: { 
   connection: Connection; 
   onDelete: (userId: string) => void;
@@ -326,19 +326,33 @@ function ConnectionCard({ connection, onDelete }: {
     setShowDropdown(false);
   };
   
+  const startChat = () => {
+    router.push(`/dashboard/messages/${connection.id}`);
+    setShowDropdown(false);
+  };
+  
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 border border-gray-200 dark:border-gray-700 relative">
-      {/* Three-dot menu */}
+      {/* Three-dot menu with chat button */}
       <div className="absolute top-2 right-2" ref={dropdownRef}>
-        <button 
-          onClick={() => setShowDropdown(!showDropdown)}
-          className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
-          aria-label="Options"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-            <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
-          </svg>
-        </button>
+        <div className="flex space-x-2">
+          <button
+            onClick={startChat}
+            className="text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300"
+            title="Send message"
+          >
+            <MessageSquare className="h-5 w-5" />
+          </button>
+          <button 
+            onClick={() => setShowDropdown(!showDropdown)}
+            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+            aria-label="Options"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+              <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+            </svg>
+          </button>
+        </div>
         
         {/* Dropdown */}
         {showDropdown && (
@@ -484,7 +498,7 @@ function RequestCard({
   );
 }
 
-// Update in page.tsx - Update UserCard function
+// Updated UserCard with chat button for connected users
 function UserCard({ user }: { user: UserSearchResult }) {
   const [isConnecting, setIsConnecting] = useState(false);
   const [status, setStatus] = useState<"idle" | "requested" | "alreadyRequested" | "connected">("idle");
@@ -492,6 +506,29 @@ function UserCard({ user }: { user: UserSearchResult }) {
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
+  
+  // Check if already connected on mount
+  useEffect(() => {
+    async function checkConnectionStatus() {
+      try {
+        const response = await fetch(`/api/user/profile/${user.username}`);
+        if (response.ok) {
+          const data = await response.json();
+          if (data.connectionStatus === 'connected') {
+            setStatus('connected');
+          } else if (data.connectionStatus === 'pending') {
+            setStatus('requested');
+          } else if (data.connectionStatus === 'received') {
+            setStatus('alreadyRequested');
+          }
+        }
+      } catch (error) {
+        console.error("Error checking connection status:", error);
+      }
+    }
+    
+    checkConnectionStatus();
+  }, [user.username]);
   
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -508,7 +545,6 @@ function UserCard({ user }: { user: UserSearchResult }) {
   }, []);
 
   const handleConnect = async () => {
-    // Existing connect functionality
     setIsConnecting(true);
     setError(null);
     
@@ -544,6 +580,11 @@ function UserCard({ user }: { user: UserSearchResult }) {
   
   const viewProfile = () => {
     router.push(`/dashboard/profile/${user.username}`);
+    setShowDropdown(false);
+  };
+  
+  const startChat = () => {
+    router.push(`/dashboard/messages/${user._id}`);
     setShowDropdown(false);
   };
 
@@ -608,9 +649,15 @@ function UserCard({ user }: { user: UserSearchResult }) {
               Request already received
             </span>
           ) : status === "connected" ? (
-            <span className="mt-2 inline-block text-xs bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300 px-2 py-1 rounded">
-              Already connected
-            </span>
+            <div className="flex mt-2 space-x-2">
+              <button
+                onClick={startChat}
+                className="inline-flex items-center text-xs bg-indigo-100 text-indigo-700 dark:bg-indigo-900 dark:text-indigo-300 px-2 py-1 rounded hover:bg-indigo-200 dark:hover:bg-indigo-800"
+              >
+                <MessageSquare className="h-3 w-3 mr-1" />
+                Message
+              </button>
+            </div>
           ) : (
             <button 
               onClick={handleConnect}

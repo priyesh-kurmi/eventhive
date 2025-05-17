@@ -16,12 +16,14 @@ import {
   X,
   LogOut,
   User,
+  MessageSquare,
+  Users
 } from "lucide-react";
 import { Dialog } from "@ark-ui/react";
 import clsx from "clsx";
 import { useTheme } from "@/context/ThemeContext";
-import { MessageSquare, Users } from "lucide-react";
 import { useUser } from "@/context/UserContext";
+import { AblyProvider } from "@/components/providers/AblyProvider";
 
 const navItems = [
   { name: "Overview", href: "/dashboard", icon: Home },
@@ -118,6 +120,7 @@ export default function DashboardLayout({
   }
 
   return (
+    <AblyProvider>
     <div className="flex min-h-screen transition-colors duration-200 dark:bg-gray-900 dark:text-white">
       {/* Sidebar for desktop */}
       <div className="hidden md:flex w-64 flex-col fixed inset-y-0 z-50">
@@ -298,5 +301,6 @@ export default function DashboardLayout({
         <div className="w-full p-4 md:p-8">{children}</div>
       </main>
     </div>
+    </AblyProvider>
   );
 }
