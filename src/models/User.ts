@@ -29,6 +29,10 @@ export interface IUser extends Document {
     networkingGoals?: string[];
   };
   connections?: mongoose.Types.ObjectId[];
+  connectionRequests?: {
+    from: mongoose.Types.ObjectId;
+    createdAt: Date;
+  }[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -58,7 +62,15 @@ const UserSchema = new Schema<IUser>(
       required: false
     },
     profession: { type: String },
+
+    // Connection fields
     connections: [{ type: Schema.Types.ObjectId, ref: 'User' }],
+    connectionRequests: [{
+      from: { type: Schema.Types.ObjectId, ref: 'User' },
+      createdAt: { type: Date, default: Date.now }
+    }],
+
+
     company: { type: String },
     bio: { 
       type: String,

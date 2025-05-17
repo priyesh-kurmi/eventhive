@@ -4,7 +4,8 @@ import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useUser } from "@/context/UserContext";
 import UserSearch from "@/components/dashboard/UserSearch";
-import { Search, Users } from "lucide-react";
+import { Search, Users, UserPlus, Clock } from "lucide-react";
+import { formatDistanceToNow } from "date-fns";
 
 type UserSearchResult = {
   _id: string;
@@ -14,14 +15,26 @@ type UserSearchResult = {
   profession?: string;
 };
 
+type ConnectionRequest = {
+  id: string;
+  name: string;
+  username: string;
+  avatar?: string;
+  profession?: string;
+  createdAt: string;
+};
+
 export default function ConnectionsPage() {
   const { data: session } = useSession();
   const { userData } = useUser();
   const [connections, setConnections] = useState<Connection[]>([]);
+  const [connectionRequests, setConnectionRequests] = useState<ConnectionRequest[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<"connections" | "find">("connections");
+  const [requestsLoading, setRequestsLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<"connections" | "requests" | "find">("connections");
   const [searchResults, setSearchResults] = useState<UserSearchResult[]>([]);
 
+  // Fetch connections
   useEffect(() => {
     async function fetchConnections() {
       try {
@@ -41,6 +54,97 @@ export default function ConnectionsPage() {
     }
   }, [session]);
 
+  // Fetch connection requests
+  useEffect(() => {
+    async function fetchConnectionRequests() {
+      try {
+        setRequestsLoading(true);
+        const response = await fetch('/api/user/connect/requests');
+        if (!response.ok) throw new Error('Failed to fetch connection requests');
+        const data = await response.json();
+        setConnectionRequests(data.requests);
+      } catch (error) {
+        console.error("Error fetching connection requests:", error);
+      } finally {
+        setRequestsLoading(false);
+      }
+    }
+
+    if (session?.user && activeTab === "requests") {
+      fetchConnectionRequests();
+    }
+  }, [session, activeTab]);
+
+  // Handle accepting connection request
+  const handleAcceptRequest = async (userId: string) => {
+    try {
+      const response = await fetch('/api/user/connect/accept', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ userId })
+      });
+      
+      if (!response.ok) throw new Error('Failed to accept connection request');
+      
+      // Remove from requests and refresh connections
+      setConnectionRequests(prev => prev.filter(req => req.id !== userId));
+      
+      // Refetch connections to show the new connection
+      const connectionsResponse = await fetch('/api/user/connections');
+      if (connectionsResponse.ok) {
+        const data = await connectionsResponse.json();
+        setConnections(data.connections);
+      }
+      
+    } catch (error) {
+      console.error("Error accepting connection request:", error);
+    }
+  };
+
+  // Handle rejecting connection request
+  const handleRejectRequest = async (userId: string) => {
+    try {
+      const response = await fetch('/api/user/connect/reject', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ userId })
+      });
+      
+      if (!response.ok) throw new Error('Failed to reject connection request');
+      
+      // Remove from requests
+      setConnectionRequests(prev => prev.filter(req => req.id !== userId));
+      
+    } catch (error) {
+      console.error("Error rejecting connection request:", error);
+    }
+  };
+
+  // Handle deleting a connection
+  const handleDeleteConnection = async (userId: string) => {
+    try {
+      const response = await fetch('/api/user/connect/delete', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ userId })
+      });
+      
+      if (!response.ok) throw new Error('Failed to delete connection');
+      
+      // Remove from connections list
+      setConnections(prev => prev.filter(conn => conn.id !== userId));
+      
+    } catch (error) {
+      console.error("Error deleting connection:", error);
+    }
+  };
+
   return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-2xl font-bold mb-6">Connections</h1>
@@ -58,6 +162,22 @@ export default function ConnectionsPage() {
           >
             <Users className="mr-2 h-5 w-5" />
             Your Connections
+          </button>
+          <button
+            onClick={() => setActiveTab("requests")}
+            className={`py-4 px-1 inline-flex items-center border-b-2 font-medium text-sm ${
+              activeTab === "requests"
+                ? "border-indigo-500 text-indigo-600 dark:text-indigo-400"
+                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300"
+            }`}
+          >
+            <UserPlus className="mr-2 h-5 w-5" />
+            Connection Requests
+            {connectionRequests.length > 0 && (
+              <span className="ml-2 bg-indigo-100 text-indigo-600 dark:bg-indigo-900 dark:text-indigo-300 px-2 py-0.5 rounded-full text-xs">
+                {connectionRequests.length}
+              </span>
+            )}
           </button>
           <button
             onClick={() => setActiveTab("find")}
@@ -83,13 +203,45 @@ export default function ConnectionsPage() {
           ) : connections.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {connections.map((connection) => (
-                <ConnectionCard key={connection.id} connection={connection} />
+                <ConnectionCard 
+                  key={connection.id} 
+                  connection={connection} 
+                  onDelete={handleDeleteConnection}
+                />
               ))}
             </div>
           ) : (
             <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-6 text-center">
               <p className="text-gray-600 dark:text-gray-300">
                 You don't have any connections yet. Go to the "Find Connections" tab to discover people to connect with.
+              </p>
+            </div>
+          )}
+        </div>
+      )}
+      
+      {/* Connection Requests Tab Content */}
+      {activeTab === "requests" && (
+        <div>
+          {requestsLoading ? (
+            <div className="flex justify-center py-8">
+              <div className="animate-pulse">Loading connection requests...</div>
+            </div>
+          ) : connectionRequests.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {connectionRequests.map((request) => (
+                <RequestCard 
+                  key={request.id} 
+                  request={request} 
+                  onAccept={handleAcceptRequest}
+                  onReject={handleRejectRequest}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-6 text-center">
+              <p className="text-gray-600 dark:text-gray-300">
+                You don't have any pending connection requests.
               </p>
             </div>
           )}
@@ -136,9 +288,33 @@ type Connection = {
   profession?: string;
 };
 
-function ConnectionCard({ connection }: { connection: Connection }) {
+function ConnectionCard({ connection, onDelete }: { 
+  connection: Connection; 
+  onDelete: (userId: string) => void;
+}) {
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+  
+  const handleDelete = async () => {
+    setIsDeleting(true);
+    await onDelete(connection.id);
+    setIsDeleting(false);
+    setShowConfirm(false);
+  };
+  
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 border border-gray-200 dark:border-gray-700">
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 border border-gray-200 dark:border-gray-700 relative">
+      {/* Show delete button */}
+      <button 
+        onClick={() => setShowConfirm(true)}
+        className="absolute top-2 right-2 text-gray-400 hover:text-red-500"
+        aria-label="Delete connection"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+      
       <div className="flex items-center space-x-4">
         <div className="flex-shrink-0">
           {connection.avatar ? (
@@ -161,11 +337,145 @@ function ConnectionCard({ connection }: { connection: Connection }) {
           </p>
         </div>
       </div>
+      
+      {/* Confirmation dialog */}
+      {showConfirm && (
+        <div className="mt-3 border-t border-gray-200 dark:border-gray-700 pt-3">
+          <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">
+            Are you sure you want to remove this connection?
+          </p>
+          <div className="flex space-x-2">
+            <button
+              onClick={handleDelete}
+              disabled={isDeleting}
+              className="text-xs bg-red-600 hover:bg-red-700 text-white py-1 px-2 rounded disabled:opacity-50"
+            >
+              {isDeleting ? "Removing..." : "Yes, Remove"}
+            </button>
+            <button
+              onClick={() => setShowConfirm(false)}
+              className="text-xs bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 py-1 px-2 rounded"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function RequestCard({ 
+  request, 
+  onAccept, 
+  onReject 
+}: { 
+  request: ConnectionRequest; 
+  onAccept: (userId: string) => void;
+  onReject: (userId: string) => void;
+}) {
+  const [isProcessing, setIsProcessing] = useState(false);
+  
+  const handleAccept = async () => {
+    setIsProcessing(true);
+    await onAccept(request.id);
+    setIsProcessing(false);
+  };
+  
+  const handleReject = async () => {
+    setIsProcessing(true);
+    await onReject(request.id);
+    setIsProcessing(false);
+  };
+  
+  return (
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 border border-gray-200 dark:border-gray-700">
+      <div className="flex items-center space-x-4">
+        <div className="flex-shrink-0">
+          {request.avatar ? (
+            <img 
+              src={request.avatar} 
+              alt={request.name} 
+              className="w-12 h-12 rounded-full"
+            />
+          ) : (
+            <div className="w-12 h-12 rounded-full bg-indigo-600 flex items-center justify-center text-white font-medium">
+              {request.name.charAt(0)}
+            </div>
+          )}
+        </div>
+        <div className="flex-grow">
+          <h3 className="text-lg font-medium">{request.name}</h3>
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            @{request.username}
+            {request.profession && ` • ${request.profession}`}
+          </p>
+          <p className="text-xs text-gray-400 flex items-center mt-1">
+            <Clock className="w-3 h-3 mr-1" />
+            Requested {formatDistanceToNow(new Date(request.createdAt), { addSuffix: true })}
+          </p>
+        </div>
+      </div>
+      
+      <div className="mt-4 flex space-x-2">
+        <button
+          onClick={handleAccept}
+          disabled={isProcessing}
+          className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-3 rounded text-sm font-medium disabled:opacity-50"
+        >
+          Accept
+        </button>
+        <button
+          onClick={handleReject}
+          disabled={isProcessing}
+          className="flex-1 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 py-2 px-3 rounded text-sm font-medium disabled:opacity-50"
+        >
+          Decline
+        </button>
+      </div>
     </div>
   );
 }
 
 function UserCard({ user }: { user: UserSearchResult }) {
+  const [isConnecting, setIsConnecting] = useState(false);
+  const [status, setStatus] = useState<"idle" | "requested" | "alreadyRequested" | "connected">("idle");
+  const [error, setError] = useState<string | null>(null);
+
+  const handleConnect = async () => {
+    setIsConnecting(true);
+    setError(null);
+    
+    try {
+      const response = await fetch('/api/user/connect/request', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ userId: user._id })
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        if (data.error === "Already connected with this user") {
+          setStatus("connected");
+        } else {
+          throw new Error(data.error || "Failed to send connection request");
+        }
+      } else if (data.alreadyRequested) {
+        setStatus("alreadyRequested");
+      } else {
+        setStatus("requested");
+      }
+    } catch (error) {
+      setError(error instanceof Error ? error.message : "An error occurred");
+      setStatus("idle");
+    } finally {
+      setIsConnecting(false);
+    }
+  };
+
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 border border-gray-200 dark:border-gray-700">
       <div className="flex items-center space-x-4">
@@ -182,17 +492,38 @@ function UserCard({ user }: { user: UserSearchResult }) {
             </div>
           )}
         </div>
-        <div>
+        <div className="flex-grow">
           <h3 className="text-lg font-medium">{user.name}</h3>
           <p className="text-sm text-gray-500 dark:text-gray-400">
             @{user.username}
             {user.profession && ` • ${user.profession}`}
           </p>
-          <button 
-            className="mt-2 text-sm bg-indigo-600 hover:bg-indigo-700 text-white py-1 px-3 rounded"
-          >
-            Connect
-          </button>
+          
+          {error && (
+            <p className="text-xs text-red-500 mt-1">{error}</p>
+          )}
+          
+          {status === "requested" ? (
+            <span className="mt-2 inline-block text-xs bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300 px-2 py-1 rounded">
+              Request sent
+            </span>
+          ) : status === "alreadyRequested" ? (
+            <span className="mt-2 inline-block text-xs bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300 px-2 py-1 rounded">
+              Request already received
+            </span>
+          ) : status === "connected" ? (
+            <span className="mt-2 inline-block text-xs bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300 px-2 py-1 rounded">
+              Already connected
+            </span>
+          ) : (
+            <button 
+              onClick={handleConnect}
+              disabled={isConnecting}
+              className="mt-2 text-sm bg-indigo-600 hover:bg-indigo-700 text-white py-1 px-3 rounded disabled:opacity-50"
+            >
+              {isConnecting ? "Connecting..." : "Connect"}
+            </button>
+          )}
         </div>
       </div>
     </div>
