@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import { useUser } from "@/context/UserContext";
 import UserSearch from "@/components/dashboard/UserSearch";
 import { Search, Users, UserPlus, Clock } from "lucide-react";
@@ -288,12 +289,30 @@ type Connection = {
   profession?: string;
 };
 
+// Update in page.tsx - Replace existing ConnectionCard
 function ConnectionCard({ connection, onDelete }: { 
   connection: Connection; 
   onDelete: (userId: string) => void;
 }) {
   const [isDeleting, setIsDeleting] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
+  
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setShowDropdown(false);
+      }
+    }
+    
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
   
   const handleDelete = async () => {
     setIsDeleting(true);
@@ -302,18 +321,46 @@ function ConnectionCard({ connection, onDelete }: {
     setShowConfirm(false);
   };
   
+  const viewProfile = () => {
+    router.push(`/dashboard/profile/${connection.username}`);
+    setShowDropdown(false);
+  };
+  
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 border border-gray-200 dark:border-gray-700 relative">
-      {/* Show delete button */}
-      <button 
-        onClick={() => setShowConfirm(true)}
-        className="absolute top-2 right-2 text-gray-400 hover:text-red-500"
-        aria-label="Delete connection"
-      >
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-        </svg>
-      </button>
+      {/* Three-dot menu */}
+      <div className="absolute top-2 right-2" ref={dropdownRef}>
+        <button 
+          onClick={() => setShowDropdown(!showDropdown)}
+          className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+          aria-label="Options"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+            <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+          </svg>
+        </button>
+        
+        {/* Dropdown */}
+        {showDropdown && (
+          <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg py-1 z-10 border border-gray-200 dark:border-gray-700">
+            <button
+              onClick={viewProfile}
+              className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+            >
+              View Profile
+            </button>
+            <button
+              onClick={() => {
+                setShowDropdown(false);
+                setShowConfirm(true);
+              }}
+              className="block w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700"
+            >
+              Remove Connection
+            </button>
+          </div>
+        )}
+      </div>
       
       <div className="flex items-center space-x-4">
         <div className="flex-shrink-0">
@@ -437,12 +484,31 @@ function RequestCard({
   );
 }
 
+// Update in page.tsx - Update UserCard function
 function UserCard({ user }: { user: UserSearchResult }) {
   const [isConnecting, setIsConnecting] = useState(false);
   const [status, setStatus] = useState<"idle" | "requested" | "alreadyRequested" | "connected">("idle");
   const [error, setError] = useState<string | null>(null);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
+  
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setShowDropdown(false);
+      }
+    }
+    
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   const handleConnect = async () => {
+    // Existing connect functionality
     setIsConnecting(true);
     setError(null);
     
@@ -475,9 +541,39 @@ function UserCard({ user }: { user: UserSearchResult }) {
       setIsConnecting(false);
     }
   };
+  
+  const viewProfile = () => {
+    router.push(`/dashboard/profile/${user.username}`);
+    setShowDropdown(false);
+  };
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 border border-gray-200 dark:border-gray-700">
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 border border-gray-200 dark:border-gray-700 relative">
+      {/* Three-dot menu */}
+      <div className="absolute top-2 right-2" ref={dropdownRef}>
+        <button 
+          onClick={() => setShowDropdown(!showDropdown)}
+          className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+          aria-label="Options"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+            <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+          </svg>
+        </button>
+        
+        {/* Dropdown */}
+        {showDropdown && (
+          <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg py-1 z-10 border border-gray-200 dark:border-gray-700">
+            <button
+              onClick={viewProfile}
+              className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+            >
+              View Profile
+            </button>
+          </div>
+        )}
+      </div>
+      
       <div className="flex items-center space-x-4">
         <div className="flex-shrink-0">
           {user.avatar ? (
