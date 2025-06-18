@@ -2,7 +2,7 @@ import { getServerSession } from "next-auth/next";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { CalendarDays, Users, ArrowRight, Globe, Sparkles, MessageCircle, Network, Star, CheckCircle } from "lucide-react";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { authOptions } from "@/lib/auth-options";
 
 export default async function Home() {
   const session = await getServerSession(authOptions);

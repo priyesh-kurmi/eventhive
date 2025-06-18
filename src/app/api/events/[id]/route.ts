@@ -3,11 +3,11 @@ import { connectToDatabase } from "@/lib/db";
 import Event from "@/models/Event";
 import User from "@/models/User";
 import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { authOptions } from "@/lib/auth-options";
 
 export async function GET(
   request: Request,
-  context: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
     // Get session from NextAuth instead of Clerk
@@ -20,7 +20,7 @@ export async function GET(
       );
     }
 
-    const { id } = context.params;
+    const { id } = await context.params;
     
     // Connect to database
     await connectToDatabase();
@@ -72,7 +72,7 @@ export async function GET(
 // You should also implement the PUT/PATCH and DELETE methods with similar updates
 export async function PUT(
   request: Request,
-  context: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
     // Get session from NextAuth
@@ -85,7 +85,7 @@ export async function PUT(
       );
     }
 
-    const { id } = context.params;
+    const { id } = await context.params;
     
     // Connect to database
     await connectToDatabase();
@@ -140,7 +140,7 @@ export async function PUT(
 
 export async function DELETE(
   request: Request,
-  context: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
     // Get session from NextAuth
@@ -153,7 +153,7 @@ export async function DELETE(
       );
     }
 
-    const { id } = context.params;
+    const { id } = await context.params;
     
     // Connect to database
     await connectToDatabase();

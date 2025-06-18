@@ -3,11 +3,11 @@ import { connectToDatabase } from '@/lib/db';
 import Message from '@/models/Message';
 import User from '@/models/User';
 import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { authOptions } from "@/lib/auth-options";
 
 export async function GET(
   request: Request,
-  context: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
     // Get session from NextAuth
@@ -17,7 +17,7 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { id } = context.params;
+    const { id } = await context.params;
     
     await connectToDatabase();
 
@@ -38,7 +38,7 @@ export async function GET(
 
 export async function POST(
   request: Request,
-  context: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
     // Get session from NextAuth
@@ -48,7 +48,7 @@ export async function POST(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { id } = context.params;
+    const { id } = await context.params;
     const { content } = await request.json();
 
     if (!content || typeof content !== 'string' || content.trim() === '') {

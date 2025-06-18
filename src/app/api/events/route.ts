@@ -3,7 +3,7 @@ import { connectToDatabase } from "@/lib/db";
 import Event from "@/models/Event";
 import User from "@/models/User";
 import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { authOptions } from "@/lib/auth-options";
 
 export async function GET(request: Request) {
   try {

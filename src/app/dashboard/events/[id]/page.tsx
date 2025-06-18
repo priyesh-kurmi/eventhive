@@ -25,13 +25,7 @@ import { formatDate } from "@/lib/utils";
 import EventChat from "@/components/chat/EventChat";
 import { useTheme } from "@/context/ThemeContext";
 
-interface EventParams {
-  params: {
-    id: string;
-  };
-}
-
-export default function EventDetailPage({ params }: EventParams) {
+export default function EventDetailPage() {
   const router = useRouter();
   const { data: session } = useSession(); // Changed from Clerk
   const { userData } = useUser(); // Use your context

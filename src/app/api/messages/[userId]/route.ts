@@ -3,7 +3,7 @@ import { connectToDatabase } from '@/lib/db';
 import DirectMessage from '@/models/DirectMessage';
 import User from '@/models/User';
 import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { authOptions } from "@/lib/auth-options";
 import mongoose from 'mongoose';
 
 // Helper function to extract userId from URL

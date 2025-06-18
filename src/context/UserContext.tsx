@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter, usePathname } from "next/navigation";
 
@@ -49,8 +49,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   const { data: session, status } = useSession();
   const router = useRouter();
   const pathname = usePathname();
-
-  const fetchUserData = async () => {
+  const fetchUserData = useCallback(async () => {
     if (status === 'loading') return;
     
     if (status === 'unauthenticated') {
@@ -83,10 +82,9 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         
         // Try to parse as JSON if possible
         let errorData: { code?: string, needsOnboarding?: boolean } = {};
-        if (rawResponseText) {
-          try {
+        if (rawResponseText) {          try {
             errorData = JSON.parse(rawResponseText);
-          } catch (parseError) {
+          } catch {
             console.warn("Response is not valid JSON:", rawResponseText);
           }
         }
@@ -128,12 +126,11 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         }
       }
     } catch (error) {
-      console.error("Network error fetching user data:", error);
-      setUserData(null);
+      console.error("Network error fetching user data:", error);      setUserData(null);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [session, status, router, pathname]);
 
   // Add method to update current event
   const setCurrentEvent = (event: { id: string; name: string; date: string } | null) => {
@@ -144,14 +141,13 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       });
     }
   };
-
   useEffect(() => {
     if (session?.user) {
       fetchUserData();
     } else if (status !== 'loading') {
       setIsLoading(false);
     }
-  }, [session, status]);
+  }, [session, status, fetchUserData]);
 
   return (
     <UserContext.Provider value={{ 

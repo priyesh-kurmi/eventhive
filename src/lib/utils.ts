@@ -23,7 +23,7 @@ export function generateRandomUsername(): string {
   return `${adjective}${noun}${number}`;
 }
 
-export async function ensureUniqueUsername(username: string, User: any): Promise<string> {
+export async function ensureUniqueUsername(username: string, User: typeof import('@/models/User').default): Promise<string> {
   // First make sure username matches the required format
   if (!/^[a-zA-Z0-9]+$/.test(username)) {
     // Replace any invalid characters with empty string

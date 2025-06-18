@@ -2,8 +2,22 @@
 
 import { useState, useEffect, useRef } from "react";
 import { Send, User, Smile, Paperclip, MoreVertical } from "lucide-react";
-import { ChatMessage } from "@/lib/socket";
 import { useEventChat } from "@/hooks/useSocket";
+
+// Use the Message interface that matches the hook's expectation
+interface EventMessage {
+  id: string;
+  content: string;
+  userId: string;
+  userName: string;
+  timestamp: Date;
+  eventId?: string;
+  targetUserId?: string;
+  // Add properties needed by the component
+  senderId?: string;
+  senderName?: string;
+  avatar?: string;
+}
 
 interface EventChatProps {
   eventId: string;
@@ -15,15 +29,14 @@ export default function EventChat({
   eventId,
   userId,
   userName,
-}: EventChatProps) {
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+}: EventChatProps) {  const [messages, setMessages] = useState<EventMessage[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [loading, setLoading] = useState(true);
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Handle new messages from Socket.IO
-  const handleNewMessage = (message: ChatMessage) => {
+  const handleNewMessage = (message: EventMessage) => {
     setMessages((prev) => [...prev, message]);
   };
 
@@ -113,12 +126,11 @@ export default function EventChat({
       return "Yesterday";
     } else {
       return date.toLocaleDateString([], { month: "short", day: "numeric" });
-    }
-  };
+    }  };
 
   // Group messages by date
-  const groupMessagesByDate = (messages: ChatMessage[]) => {
-    const groups: { [key: string]: ChatMessage[] } = {};
+  const groupMessagesByDate = (messages: EventMessage[]) => {
+    const groups: { [key: string]: EventMessage[] } = {};
     messages.forEach((message) => {
       const dateKey = new Date(message.timestamp).toDateString();
       if (!groups[dateKey]) {
@@ -185,7 +197,7 @@ export default function EventChat({
                 <div className="flex items-center justify-center py-3">
                   <div className="bg-gray-200 dark:bg-gray-700 rounded-full px-3 py-1.5">
                     <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
-                      {formatDate(dayMessages[0].timestamp)}
+                      {formatDate(new Date(dayMessages[0].timestamp).getTime())}
                     </span>
                   </div>
                 </div>
@@ -196,12 +208,12 @@ export default function EventChat({
                     <div
                       key={message.id || `temp-message-${index}`}
                       className={`flex ${
-                        message.senderId === userId ? "justify-end" : "justify-start"
+                        message.userId === userId ? "justify-end" : "justify-start"
                       }`}
                     >
                       <div
                         className={`flex max-w-[75%] ${
-                          message.senderId === userId ? "flex-row-reverse" : "flex-row"
+                          message.userId === userId ? "flex-row-reverse" : "flex-row"
                         }`}
                       >
                         {/* Avatar */}
@@ -209,7 +221,7 @@ export default function EventChat({
                           {message.avatar ? (
                             <img
                               src={message.avatar}
-                              alt={message.senderName}
+                              alt={message.userName}
                               className="h-8 w-8 rounded-xl object-cover ring-2 ring-white dark:ring-gray-700 shadow-lg"
                             />
                           ) : (
@@ -220,10 +232,9 @@ export default function EventChat({
                         </div>
 
                         {/* Message bubble */}
-                        <div className={`mx-2 ${message.senderId === userId ? "mr-0" : "ml-0"}`}>
-                          <div
+                        <div className={`mx-2 ${message.userId === userId ? "mr-0" : "ml-0"}`}>                          <div
                             className={`px-3 py-2 rounded-xl shadow-lg ${
-                              message.senderId === userId
+                              message.userId === userId
                                 ? "bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-br-sm"
                                 : "bg-white dark:bg-gray-700 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-600 rounded-bl-sm"
                             }`}
@@ -231,18 +242,17 @@ export default function EventChat({
                             <div className="flex flex-col">
                               <div className="flex items-center space-x-1.5 mb-0.5">
                                 <span className={`text-xs font-medium ${
-                                  message.senderId === userId
+                                  message.userId === userId
                                     ? "text-indigo-100"
                                     : "text-gray-600 dark:text-gray-400"
                                 }`}>
-                                  {message.senderId === userId ? "You" : message.senderName}
-                                </span>
-                                <span className={`text-xs ${
-                                  message.senderId === userId
+                                  {message.userId === userId ? "You" : message.userName}
+                                </span>                                <span className={`text-xs ${
+                                  message.userId === userId
                                     ? "text-indigo-200"
                                     : "text-gray-500 dark:text-gray-500"
                                 }`}>
-                                  {formatTime(message.timestamp)}
+                                  {formatTime(new Date(message.timestamp).getTime())}
                                 </span>
                               </div>
                               <p className="text-sm leading-relaxed">{message.content}</p>

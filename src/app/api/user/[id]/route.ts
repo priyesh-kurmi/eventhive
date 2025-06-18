@@ -2,15 +2,15 @@ import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/db";
 import User from "@/models/User";
 import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { authOptions } from "@/lib/auth-options";
 import mongoose from "mongoose";
 
 export async function GET(
   request: Request,
-  context: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   // Get the id from params
-  const id = context.params.id;
+  const { id } = await context.params;
   
   try {
     console.log("Fetching user with ID:", id);

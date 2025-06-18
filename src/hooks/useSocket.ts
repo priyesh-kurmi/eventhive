@@ -2,10 +2,33 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
-import { initSocket, getSocket } from '@/lib/socket';
+import { initSocket } from '@/lib/socket';
 import type { Socket } from 'socket.io-client';
 
-type MessageCallback = (message: any) => void;
+interface DirectChatMessage {
+  id: string;
+  senderId: string;
+  receiverId: string;
+  content: string;
+  timestamp: number;
+  read: boolean;
+  isCurrentUser?: boolean;
+  senderName?: string;
+  avatar?: string;
+}
+
+interface Message {
+  id: string;
+  content: string;
+  userId: string;
+  userName: string;
+  timestamp: Date;
+  eventId?: string;
+  targetUserId?: string;
+}
+
+type MessageCallback = (message: DirectChatMessage) => void;
+type EventMessageCallback = (message: Message) => void;
 
 export function useSocket() {
   const { data: session } = useSession();
@@ -53,7 +76,7 @@ export function useSocket() {
   return { socket, isConnected, error };
 }
 
-export function useEventChat(eventId: string, onMessage?: MessageCallback) {
+export function useEventChat(eventId: string, onMessage?: EventMessageCallback) {
   const { socket } = useSocket();
 
   useEffect(() => {
@@ -75,8 +98,7 @@ export function useEventChat(eventId: string, onMessage?: MessageCallback) {
       }
     };
   }, [socket, eventId, onMessage]);
-
-  const sendMessage = useCallback((message: any) => {
+  const sendMessage = useCallback((message: Message) => {
     if (socket && socket.connected) {
       socket.emit('send-event-message', { ...message, eventId });
       return true;
@@ -109,8 +131,7 @@ export function useDirectChat(chatId: string, onMessage?: MessageCallback) {
       }
     };
   }, [socket, chatId, onMessage]);
-
-  const sendMessage = useCallback((message: any) => {
+  const sendMessage = useCallback((message: Message) => {
     if (socket && socket.connected) {
       socket.emit('send-direct-message', { ...message, chatId });
       return true;
