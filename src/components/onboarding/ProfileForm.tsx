@@ -419,17 +419,14 @@ const handleSubmit = async (e: React.FormEvent) => {
       }),
     });
 
-    const data = await response.json();
-
-    if (response.ok) {
+    const data = await response.json();    if (response.ok) {
       console.log("✅ Onboarding successful, preparing redirect");
       
       // Update user data in context
       if (setUserData) {
         setUserData(data.user);
       }
-      
-      try {
+        try {
         // Update NextAuth session
         await updateSession({ isOnboarded: true });
       } catch (e) {

@@ -72,8 +72,7 @@ export const authOptions: NextAuthOptions = {
       }
     })
   ],
-  callbacks: {
-    async jwt({ token, user, account, trigger, session }) {
+  callbacks: {    async jwt({ token, user, account, trigger, session }) {
       // Initial sign in
       if (user) {
         token.id = user.id;
@@ -81,7 +80,14 @@ export const authOptions: NextAuthOptions = {
         token.name = user.name;
         token.picture = user.image;
         token.provider = account?.provider;
-        token.isOnboarded = (user as { isOnboarded?: boolean }).isOnboarded;
+        
+        // For OAuth providers, check if isOnboarded was set in signIn callback
+        if (account?.provider === "google") {
+          token.isOnboarded = (user as { isOnboarded?: boolean }).isOnboarded || false;
+        } else {
+          // For credentials, get from user object
+          token.isOnboarded = (user as { isOnboarded?: boolean }).isOnboarded || false;
+        }
       }
       
       // Handle updates from client - this is critical for onboarding
@@ -103,9 +109,7 @@ export const authOptions: NextAuthOptions = {
         session.user.isOnboarded = token.isOnboarded as boolean;
       }
       return session;
-    },
-    
-    async signIn({ user, account }) {
+    },    async signIn({ user, account }) {
       if (account?.provider === "google") {
         try {
           await connectToDatabase();
@@ -124,6 +128,12 @@ export const authOptions: NextAuthOptions = {
             });
             
             await newUser.save();
+            
+            // Set isOnboarded to false for new users
+            (user as any).isOnboarded = false;
+          } else {
+            // For existing users, get their isOnboarded status from database
+            (user as any).isOnboarded = existingUser.isOnboarded || false;
           }
         } catch (error) {
           console.error("Error in Google sign in:", error);

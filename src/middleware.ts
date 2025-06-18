@@ -40,7 +40,6 @@ export async function middleware(request: NextRequest) {
   if (isAuthRoute && isAuthenticated) {
     return NextResponse.redirect(new URL('/dashboard', request.url));
   }
-  
   // Check if user needs onboarding
   const isOnboarded = token?.isOnboarded as boolean | undefined;
   if (isAuthenticated && !isOnboarded && path !== '/onboarding') {
