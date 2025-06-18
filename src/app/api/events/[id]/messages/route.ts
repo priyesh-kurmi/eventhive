@@ -4,8 +4,6 @@ import Message from '@/models/Message';
 import User from '@/models/User';
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import * as Ably from 'ably';
-import { getEventChannelName } from '@/lib/ably';
 
 export async function GET(
   request: Request,
@@ -80,25 +78,20 @@ export async function POST(
       content: content.trim(),
       timestamp: Date.now(),
       avatar: avatar
+    });    await newMessage.save();
+
+    // Return the message - Socket.IO handling will be done on the client side
+    return NextResponse.json({ 
+      message: {
+        id: newMessage._id.toString(),
+        eventId: id,
+        senderId: senderId,
+        senderName: senderName,
+        content: content.trim(),
+        timestamp: newMessage.timestamp,
+        avatar: avatar
+      }
     });
-
-    await newMessage.save();
-
-    // Publish to Ably
-    const ably = new Ably.Rest(process.env.ABLY_API_KEY!);
-    const channel = ably.channels.get(getEventChannelName(id));
-    
-    await channel.publish('new-message', {
-      id: newMessage._id.toString(),
-      eventId: id,
-      senderId: senderId,
-      senderName: senderName,
-      content: content.trim(),
-      timestamp: newMessage.timestamp,
-      avatar: avatar
-    });
-
-    return NextResponse.json({ message: newMessage });
   } catch (error) {
     console.error('Error creating message:', error);
     return NextResponse.json(

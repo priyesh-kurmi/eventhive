@@ -1,12 +1,40 @@
-import * as Ably from 'ably';
+import { io, Socket } from 'socket.io-client';
 
-export function getAblyClient() {
-  const client = new Ably.Realtime({
-    authUrl: '/api/ably-token',
-    authMethod: 'POST'
-  });
-  return client;
-}
+let socket: Socket | null = null;
+
+export const initSocket = (): Socket => {
+  if (!socket) {
+    socket = io(process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:3001', {
+      transports: ['websocket', 'polling'],
+      withCredentials: true
+    });
+
+    socket.on('connect', () => {
+      console.log('Connected to Socket.IO server:', socket?.id);
+    });
+
+    socket.on('disconnect', (reason) => {
+      console.log('Disconnected from Socket.IO server:', reason);
+    });
+
+    socket.on('connect_error', (error) => {
+      console.error('Socket.IO connection error:', error);
+    });
+  }
+  
+  return socket;
+};
+
+export const getSocket = (): Socket | null => {
+  return socket;
+};
+
+export const disconnectSocket = (): void => {
+  if (socket) {
+    socket.disconnect();
+    socket = null;
+  }
+};
 
 // Helper to create a unique channel name for events
 export function getEventChannelName(eventId: string) {
@@ -20,7 +48,7 @@ export function getDirectMessageChannelName(user1Id: string, user2Id: string) {
   return `direct-chat:${sortedIds[0]}:${sortedIds[1]}`;
 }
 
-// Message format for chat
+// Message format for event chat
 export interface ChatMessage {
   id: string;
   eventId: string;
@@ -46,8 +74,7 @@ export interface DirectChatMessage {
 // Chat metadata for listing active chats
 export interface ChatMetadata {
   userId: string;
-  username: string;
-  name: string;
+  userName: string;
   avatar?: string;
   lastMessage: string;
   lastMessageTime: number;

@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { useParams } from "next/navigation";
 import { useSession } from "next-auth/react"; // Changed from Clerk
 import { useUser } from "@/context/UserContext";
-import { AblyProvider } from "@/components/providers/AblyProvider";
 import { 
   Calendar, 
   Clock, 
@@ -162,254 +161,439 @@ export default function EventDetailPage({ params }: EventParams) {
       </div>
     );
   }
-
   return (
-    <div className="flex flex-col gap-6">
-      {/* Main content */}
-      <div className="flex-1">
-        {/* Back button */}
-        <div className="mb-4">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-indigo-950 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Navigation */}
+        <div className="mb-8">
           <button
             onClick={() => router.push("/dashboard/events")}
-            className="inline-flex items-center text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
+            className="group inline-flex items-center text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors duration-200"
           >
-            <ChevronLeft className="h-4 w-4 mr-1" />
+            <ChevronLeft className="h-4 w-4 mr-2 group-hover:-translate-x-1 transition-transform duration-200" />
             Back to Events
           </button>
         </div>
 
-        {/* Event header */}
-        <div className="bg-white dark:bg-gray-800 shadow overflow-hidden sm:rounded-lg mb-6">
-          <div className="px-4 py-5 sm:px-6">
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between">
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900 dark:text-white md:text-3xl">
-                  {event.title}
-                </h1>
-                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                  Organized by {event.createdBy?.name || "Unknown"}
-                </p>
+        {/* Hero Section */}
+        <div className="relative bg-white dark:bg-gray-800 shadow-xl rounded-3xl overflow-hidden mb-8 border border-gray-100 dark:border-gray-700">          {/* Background Pattern */}
+          <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-purple-500/5 dark:from-indigo-500/10 dark:to-purple-500/10" />
+          <div className="absolute inset-0 opacity-30">
+            <div className="w-full h-full" style={{
+              backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23e0e7ff' fill-opacity='0.1'%3E%3Ccircle cx='7' cy='7' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+              backgroundSize: '60px 60px'
+            }} />
+          </div>
+            <div className="relative px-6 py-8">
+            <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
+              {/* Event Info */}
+              <div className="flex-1">
+                <div className="flex items-center gap-3 mb-5">
+                  <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center">
+                    <Calendar className="h-5 w-5 text-white" />
+                  </div>
+                  <div>
+                    <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white leading-tight">
+                      {event.title}
+                    </h1>
+                    <p className="text-base text-gray-600 dark:text-gray-300 flex items-center mt-1">
+                      <User className="h-4 w-4 mr-2" />
+                      Organized by <span className="font-medium ml-1">{event.createdBy?.name || "Unknown"}</span>
+                    </p>
+                  </div>
+                </div>
+
+                {/* Event Meta Info */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                  <div className="flex items-center bg-white/60 dark:bg-gray-700/60 backdrop-blur-sm rounded-xl p-3 border border-gray-200/50 dark:border-gray-600/50">
+                    <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center mr-3">
+                      <Calendar className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-gray-900 dark:text-white">Date</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-300">{formatDate(event.date)}</p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center bg-white/60 dark:bg-gray-700/60 backdrop-blur-sm rounded-xl p-3 border border-gray-200/50 dark:border-gray-600/50">
+                    <div className="w-8 h-8 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center mr-3">
+                      <Clock className="h-4 w-4 text-green-600 dark:text-green-400" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-gray-900 dark:text-white">Time</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-300">{event.startTime} - {event.endTime}</p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center bg-white/60 dark:bg-gray-700/60 backdrop-blur-sm rounded-xl p-3 border border-gray-200/50 dark:border-gray-600/50">
+                    <div className="w-8 h-8 bg-purple-100 dark:bg-purple-900/30 rounded-lg flex items-center justify-center mr-3">
+                      <MapPin className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-gray-900 dark:text-white">Location</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-300">{event.isVirtual ? 'Virtual Event' : (event.location || 'Location TBD')}</p>
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div className="mt-4 md:mt-0 flex gap-2">
-                <button 
-                  onClick={() => setActiveTab("discussions")}
-                  className="inline-flex items-center px-3 py-1.5 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 md:hidden"
-                >
-                  <MessageCircle className="h-4 w-4 mr-2" />
-                  Discussions
-                </button>
-                <button className="inline-flex items-center px-3 py-1.5 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
-                  <Share2 className="h-4 w-4 mr-2" />
-                  Share
-                </button>
+
+              {/* Action Buttons */}
+              <div className="flex flex-col sm:flex-row lg:flex-col gap-3 lg:min-w-[180px]">
                 {!isAttending ? (
                   <button
                     onClick={handleJoinEvent}
                     disabled={joiningEvent}
-                    className="inline-flex items-center px-3 py-1.5 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 disabled:opacity-50"
+                    className="group inline-flex items-center justify-center px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-medium rounded-xl shadow-lg hover:shadow-xl hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:ring-offset-gray-800 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <Star className="h-4 w-4 mr-2" />
+                    <Star className="h-4 w-4 mr-2 group-hover:scale-110 transition-transform duration-200" />
                     {joiningEvent ? "Joining..." : "Join Event"}
                   </button>
                 ) : (
-                  <span className="inline-flex items-center px-3 py-1.5 border border-green-300 dark:border-green-800 text-sm font-medium rounded-md text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-900/30">
-                    <Star className="h-4 w-4 mr-2 text-green-500" />
+                  <div className="inline-flex items-center justify-center px-5 py-2.5 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-medium rounded-xl shadow-lg">
+                    <Star className="h-4 w-4 mr-2 fill-current" />
                     Attending
-                  </span>
+                  </div>
                 )}
-              </div>
-            </div>
-          </div>
-
-          <div className="border-t border-gray-200 dark:border-gray-700 px-4 py-5 sm:px-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
-                <Calendar className="h-5 w-5 text-gray-400 dark:text-gray-500 mr-2" />
-                <span>{formatDate(event.date)}</span>
-              </div>
-              <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
-                <Clock className="h-5 w-5 text-gray-400 dark:text-gray-500 mr-2" />
-                <span>{event.startTime} - {event.endTime}</span>
-              </div>
-              <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
-                <MapPin className="h-5 w-5 text-gray-400 dark:text-gray-500 mr-2" />
-                <span>{event.isVirtual ? 'Virtual Event' : (event.location || 'Location TBD')}</span>
+                
+                <button className="inline-flex items-center justify-center px-5 py-2.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white font-medium rounded-xl shadow-md hover:shadow-lg border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 dark:ring-offset-gray-800 transition-all duration-200">
+                  <Share2 className="h-4 w-4 mr-2" />
+                  Share Event
+                </button>
+                
+                <button 
+                  onClick={() => setActiveTab("discussions")}
+                  className="lg:hidden inline-flex items-center justify-center px-5 py-2.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white font-medium rounded-xl shadow-md hover:shadow-lg border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 dark:ring-offset-gray-800 transition-all duration-200"
+                >
+                  <MessageCircle className="h-4 w-4 mr-2" />
+                  Chat
+                </button>
               </div>
             </div>
 
             {/* Event Code (visible only to organizers) */}
             {isOrganizer && (
-              <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center">
-                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300 mr-2">Event Code:</span>
-                    <div className="relative rounded-md shadow-sm">
+              <div className="mt-6 pt-6 border-t border-gray-200/50 dark:border-gray-600/50">
+                <div className="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 rounded-xl p-5 border border-amber-200/50 dark:border-amber-700/50">
+                  <h3 className="text-lg font-semibold text-amber-900 dark:text-amber-100 mb-3 flex items-center">
+                    <div className="w-7 h-7 bg-amber-200 dark:bg-amber-800 rounded-lg flex items-center justify-center mr-3">
+                      <svg className="w-4 h-4 text-amber-600 dark:text-amber-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M18 8a6 6 0 01-7.743 5.743L10 14l-1 1-1 1H6v2H2v-4l4.257-4.257A6 6 0 1118 8zm-6-4a1 1 0 100 2 2 2 0 012 2 1 1 0 102 0 4 4 0 00-4-4z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                    Event Access Code
+                  </h3>
+                  <div className="flex items-center gap-3">
+                    <div className="flex-1 relative">
                       <input
                         type={showCode ? "text" : "password"}
                         readOnly
                         value={event.code}
-                        className="focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 dark:text-gray-200 pr-20"
+                        className="w-full px-3 py-2.5 bg-white dark:bg-gray-800 border border-amber-300 dark:border-amber-600 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent text-base font-mono tracking-wider"
                       />
-                      <div className="absolute inset-y-0 right-0 flex items-center pr-3 space-x-2">
+                      <div className="absolute right-2 top-1/2 transform -translate-y-1/2 flex items-center gap-1">
                         <button
                           type="button"
                           onClick={() => setShowCode(!showCode)}
-                          className="text-gray-400 dark:text-gray-500 hover:text-gray-500 dark:hover:text-gray-400 focus:outline-none"
+                          className="p-1 text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300 focus:outline-none"
                         >
-                          {showCode ? (
-                            <EyeOff className="h-4 w-4" />
-                          ) : (
-                            <Eye className="h-4 w-4" />
-                          )}
+                          {showCode ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                         </button>
                         <button
                           onClick={copyEventCode}
-                          className="text-gray-400 dark:text-gray-500 hover:text-gray-500 dark:hover:text-gray-400 focus:outline-none"
+                          className="p-1 text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300 focus:outline-none"
                         >
                           <Copy className="h-4 w-4" />
                         </button>
                       </div>
                     </div>
+                    {codeCopied && (
+                      <span className="text-sm text-green-600 dark:text-green-400 font-medium animate-pulse">
+                        Copied!
+                      </span>
+                    )}
                   </div>
-                  {codeCopied && (
-                    <span className="ml-2 text-xs text-green-600 dark:text-green-400">
-                      Copied!
-                    </span>
-                  )}
+                  <p className="mt-2 text-sm text-amber-700 dark:text-amber-300">
+                    Share this code with attendees so they can join the event directly.
+                  </p>
                 </div>
-                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                  Share this code with attendees so they can join the event directly.
-                </p>
               </div>
             )}
           </div>
-        </div>
-
-        {/* Tabs */}
-        <Tabs.Root value={activeTab} onValueChange={details => setActiveTab(details.value as string)}>
-          <Tabs.List className="flex border-b border-gray-200 dark:border-gray-700 mb-6">
-            <Tabs.Trigger 
-              value="details"
-              className={`py-4 px-1 border-b-2 font-medium text-sm mr-8 ${
-                activeTab === "details"
-                  ? "border-indigo-500 text-indigo-600 dark:text-indigo-400"
-                  : "border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600"
-              }`}
-            >
-              Event Details
-            </Tabs.Trigger>
-            <Tabs.Trigger 
-              value="attendees"
-              className={`py-4 px-1 border-b-2 font-medium text-sm mr-8 flex items-center ${
-                activeTab === "attendees"
-                  ? "border-indigo-500 text-indigo-600 dark:text-indigo-400"
-                  : "border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600"
-              }`}
-            >
-              <Users className="h-4 w-4 mr-2" />
-              Attendees ({event.attendees?.length || 0})
-            </Tabs.Trigger>
-            <Tabs.Trigger 
-              value="discussions"
-              className={`py-4 px-1 border-b-2 font-medium text-sm flex items-center ${
-                activeTab === "discussions"
-                  ? "border-indigo-500 text-indigo-600 dark:text-indigo-400"
-                  : "border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600"
-              }`}
-            >
-              <MessageCircle className="h-4 w-4 mr-2" />
-              Discussions
-            </Tabs.Trigger>
-          </Tabs.List>
+        </div>        {/* Modern Tabs Section */}
+        <Tabs.Root value={activeTab} onValueChange={details => setActiveTab(details.value as string)}>          {/* Tab Navigation */}
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 p-1.5 mb-6">
+            <Tabs.List className="flex space-x-1">
+              <Tabs.Trigger 
+                value="details"
+                className={`flex-1 flex items-center justify-center py-2.5 px-4 rounded-lg font-medium text-sm transition-all duration-200 ${
+                  activeTab === "details"
+                    ? "bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-lg"
+                    : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700"
+                }`}
+              >
+                <Calendar className="h-4 w-4 mr-2" />
+                Event Details
+              </Tabs.Trigger>
+              <Tabs.Trigger 
+                value="attendees"
+                className={`flex-1 flex items-center justify-center py-2.5 px-4 rounded-lg font-medium text-sm transition-all duration-200 ${
+                  activeTab === "attendees"
+                    ? "bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-lg"
+                    : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700"
+                }`}
+              >
+                <Users className="h-4 w-4 mr-2" />
+                Attendees ({event.attendees?.length || 0})
+              </Tabs.Trigger>
+              <Tabs.Trigger 
+                value="discussions"
+                className={`flex-1 flex items-center justify-center py-2.5 px-4 rounded-lg font-medium text-sm transition-all duration-200 ${
+                  activeTab === "discussions"
+                    ? "bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-lg"
+                    : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700"
+                }`}
+              >
+                <MessageCircle className="h-4 w-4 mr-2" />
+                Chat
+              </Tabs.Trigger>
+            </Tabs.List>
+          </div>
           
-          {/* Tab content */}
-          <div className="bg-white dark:bg-gray-800 shadow overflow-hidden sm:rounded-lg">
-            <Tabs.Content value="details">
-              <div className="px-4 py-5 sm:p-6">
+          {/* Tab Content */}
+          <div className="bg-white dark:bg-gray-800 shadow-xl rounded-2xl overflow-hidden border border-gray-100 dark:border-gray-700">            <Tabs.Content value="details">
+              <div className="p-6">
                 <div className="space-y-6">
+                  {/* Description Section */}
                   <div>
-                    <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">Description</h3>
-                    <div className="mt-2 text-sm text-gray-600 dark:text-gray-300">
-                      <p>{event.description}</p>
+                    <div className="flex items-center mb-4">
+                      <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-lg flex items-center justify-center mr-3">
+                        <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                      </div>
+                      <h3 className="text-xl font-bold text-gray-900 dark:text-white">Description</h3>
+                    </div>
+                    <div className="bg-gradient-to-br from-gray-50 to-blue-50 dark:from-gray-700/50 dark:to-blue-900/20 rounded-xl p-4 border border-gray-200/50 dark:border-gray-600/50">
+                      <p className="text-gray-700 dark:text-gray-300 leading-relaxed text-base">
+                        {event.description}
+                      </p>
                     </div>
                   </div>
 
+                  {/* Topics Section */}
                   {event.topics?.length > 0 && (
                     <div>
-                      <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">Topics</h3>
-                      <div className="mt-2 flex flex-wrap gap-2">
+                      <div className="flex items-center mb-4">
+                        <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-pink-600 rounded-lg flex items-center justify-center mr-3">
+                          <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                          </svg>
+                        </div>
+                        <h3 className="text-xl font-bold text-gray-900 dark:text-white">Topics & Tags</h3>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
                         {event.topics.map((topic: string, i: number) => (
                           <span 
                             key={i} 
-                            className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300"
+                            className="inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium bg-gradient-to-r from-purple-100 to-pink-100 dark:from-purple-900/30 dark:to-pink-900/30 text-purple-800 dark:text-purple-200 border border-purple-200 dark:border-purple-700 hover:shadow-lg transition-shadow duration-200"
                           >
+                            <svg className="w-3 h-3 mr-1.5" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M17.707 9.293a1 1 0 010 1.414l-7 7a1 1 0 01-1.414 0l-7-7A.997.997 0 012 10V5a3 3 0 013-3h5c.256 0 .512.098.707.293l7 7zM5 6a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
+                            </svg>
                             {topic}
                           </span>
                         ))}
                       </div>
                     </div>
                   )}
-                </div>
-              </div>
-            </Tabs.Content>
 
-            <Tabs.Content value="attendees">
-              <div className="px-4 py-5 sm:p-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {event.attendees?.map((attendee: any) => (
-                    <div key={attendee._id} className="flex items-center space-x-3">
-                      <div className="flex-shrink-0">
-                        {attendee.avatar ? (
-                          <img 
-                            src={attendee.avatar} 
-                            alt={attendee.name} 
-                            className="h-10 w-10 rounded-full"
-                          />
-                        ) : (
-                          <div className="h-10 w-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
-                            <User className="h-6 w-6 text-gray-500 dark:text-gray-400" />
-                          </div>
-                        )}
+                  {/* Event Stats */}
+                  <div>
+                    <div className="flex items-center mb-4">
+                      <div className="w-8 h-8 bg-gradient-to-br from-green-500 to-emerald-600 rounded-lg flex items-center justify-center mr-3">
+                        <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                        </svg>
                       </div>
-                      <div>
-                        <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100">{attendee.name}</h3>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
-                          {attendee.profession} {attendee.company ? `at ${attendee.company}` : ''}
-                        </p>
+                      <h3 className="text-xl font-bold text-gray-900 dark:text-white">Event Statistics</h3>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      <div className="bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-blue-900/20 dark:to-indigo-900/30 rounded-xl p-4 border border-blue-200/50 dark:border-blue-700/50">
+                        <div className="flex items-center">
+                          <Users className="h-6 w-6 text-blue-600 dark:text-blue-400 mr-3" />
+                          <div>
+                            <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{event.attendees?.length || 0}</p>
+                            <p className="text-sm text-blue-700 dark:text-blue-300 font-medium">Attendees</p>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="bg-gradient-to-br from-green-50 to-emerald-100 dark:from-green-900/20 dark:to-emerald-900/30 rounded-xl p-4 border border-green-200/50 dark:border-green-700/50">
+                        <div className="flex items-center">
+                          <Calendar className="h-6 w-6 text-green-600 dark:text-green-400 mr-3" />
+                          <div>
+                            <p className="text-2xl font-bold text-green-600 dark:text-green-400">
+                              {(() => {
+                                const eventDate = new Date(event.date);
+                                const today = new Date();
+                                const diffTime = eventDate.getTime() - today.getTime();
+                                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                                return diffDays > 0 ? diffDays : 0;
+                              })()}
+                            </p>
+                            <p className="text-sm text-green-700 dark:text-green-300 font-medium">Days to go</p>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="bg-gradient-to-br from-purple-50 to-pink-100 dark:from-purple-900/20 dark:to-pink-900/30 rounded-xl p-4 border border-purple-200/50 dark:border-purple-700/50">
+                        <div className="flex items-center">
+                          <svg className="h-6 w-6 text-purple-600 dark:text-purple-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                          </svg>
+                          <div>
+                            <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">{event.topics?.length || 0}</p>
+                            <p className="text-sm text-purple-700 dark:text-purple-300 font-medium">Topics</p>
+                          </div>
+                        </div>
                       </div>
                     </div>
-                  ))}
+                  </div>
                 </div>
               </div>
-            </Tabs.Content>
+            </Tabs.Content>            <Tabs.Content value="attendees">
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center">
+                    <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center mr-3">
+                      <Users className="h-5 w-5 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-bold text-gray-900 dark:text-white">Event Attendees</h3>
+                      <p className="text-gray-600 dark:text-gray-400">{event.attendees?.length || 0} people attending this event</p>
+                    </div>
+                  </div>
+                </div>
 
-            <Tabs.Content value="discussions">
-              <div className="px-4 py-5 sm:p-6">
+                {event.attendees?.length > 0 ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {event.attendees.map((attendee: any) => (
+                      <div key={attendee._id} className="group bg-gradient-to-br from-white to-gray-50 dark:from-gray-700 dark:to-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-600 hover:shadow-xl hover:scale-105 transition-all duration-300">
+                        <div className="flex items-center space-x-3">
+                          <div className="relative">
+                            {attendee.avatar ? (
+                              <img 
+                                src={attendee.avatar} 
+                                alt={attendee.name} 
+                                className="h-12 w-12 rounded-xl object-cover ring-2 ring-white dark:ring-gray-700 shadow-lg"
+                              />
+                            ) : (
+                              <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center ring-2 ring-white dark:ring-gray-700 shadow-lg">
+                                <User className="h-6 w-6 text-white" />
+                              </div>
+                            )}
+                            <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white dark:border-gray-700 flex items-center justify-center">
+                              <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
+                            </div>
+                          </div>
+                          <div className="flex-1">
+                            <h4 className="text-base font-semibold text-gray-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors duration-200">
+                              {attendee.name}
+                            </h4>
+                            <p className="text-sm text-gray-600 dark:text-gray-400 mt-0.5">
+                              {attendee.profession}
+                              {attendee.company && (
+                                <span className="block text-xs text-gray-500 dark:text-gray-500 mt-0.5">
+                                  @ {attendee.company}
+                                </span>
+                              )}
+                            </p>
+                          </div>
+                        </div>
+                        
+                        <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-600">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">ATTENDEE</span>
+                            <div className="flex items-center space-x-1">
+                              <button className="p-1.5 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-all duration-200">
+                                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                                </svg>
+                              </button>
+                              <button className="p-1.5 text-gray-400 hover:text-green-600 dark:hover:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition-all duration-200">
+                                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
+                                </svg>
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-12">
+                    <div className="w-16 h-16 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-800 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                      <Users className="h-8 w-8 text-gray-400 dark:text-gray-500" />
+                    </div>
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">No attendees yet</h3>
+                    <p className="text-gray-600 dark:text-gray-400 mb-4 max-w-md mx-auto">
+                      Be the first to join this exciting event and connect with other attendees!
+                    </p>
+                    {!isAttending && (
+                      <button
+                        onClick={handleJoinEvent}
+                        disabled={joiningEvent}
+                        className="inline-flex items-center px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-medium rounded-xl shadow-lg hover:shadow-xl hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:ring-offset-gray-800 transition-all duration-200 disabled:opacity-50"
+                      >
+                        <Star className="h-4 w-4 mr-2" />
+                        {joiningEvent ? "Joining..." : "Join Event"}
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+            </Tabs.Content>            <Tabs.Content value="discussions">
+              <div className="p-6">
                 {isAttending && userId ? (
-                  <AblyProvider clientId={userId}>
+                  <div>
+                    <div className="flex items-center mb-6">
+                      <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center mr-3">
+                        <MessageCircle className="h-5 w-5 text-white" />
+                      </div>
+                      <div>
+                        <h3 className="text-xl font-bold text-gray-900 dark:text-white">Live Discussions</h3>
+                        <p className="text-gray-600 dark:text-gray-400">Chat with fellow attendees in real-time</p>
+                      </div>
+                    </div>
                     <EventChat 
                       eventId={id} 
                       userId={userId} 
                       userName={userName} 
                     />
-                  </AblyProvider>
+                  </div>
                 ) : (
-                  <div className="text-center py-10">
-                    <MessageCircle className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500" />
-                    <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-gray-100">Event Discussions</h3>
-                    <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                      Join this event to participate in the live discussions with other attendees.
+                  <div className="text-center py-12">
+                    <div className="w-16 h-16 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-800 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                      <MessageCircle className="h-8 w-8 text-gray-400 dark:text-gray-500" />
+                    </div>
+                    <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">Event Discussions</h3>
+                    <p className="text-base text-gray-600 dark:text-gray-400 mb-6 max-w-xl mx-auto">
+                      Join this event to participate in live discussions with other attendees. Connect, share ideas, and make the most of your event experience!
                     </p>
                     {!isAttending && (
-                      <div className="mt-6">
+                      <div className="space-y-3">
                         <button
                           onClick={handleJoinEvent}
                           disabled={joiningEvent}
-                          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:ring-offset-gray-800"
+                          className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-medium rounded-xl shadow-lg hover:shadow-xl hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:ring-offset-gray-800 transition-all duration-200 disabled:opacity-50"
                         >
-                          <Star className="h-4 w-4 mr-2" />
-                          {joiningEvent ? "Joining..." : "Join Event"}
+                          <Star className="h-5 w-5 mr-2" />
+                          {joiningEvent ? "Joining..." : "Join Event to Chat"}
                         </button>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                          Free to join • Connect instantly • Real-time messaging
+                        </p>
                       </div>
                     )}
                   </div>

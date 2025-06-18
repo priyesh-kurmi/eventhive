@@ -4,8 +4,6 @@ import DirectMessage from '@/models/DirectMessage';
 import User from '@/models/User';
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import * as Ably from 'ably';
-import { getDirectMessageChannelName } from '@/lib/ably';
 import mongoose from 'mongoose';
 
 // Helper function to extract userId from URL
@@ -164,21 +162,9 @@ export async function POST(req: NextRequest) {
       content: content.trim(),
       timestamp: Date.now(),
       read: false
-    });
+    });    await newMessage.save();
 
-    await newMessage.save();
-
-    // Publish to Ably
-    const ably = new Ably.Rest(process.env.ABLY_API_KEY!);
-    
-    // Get the channel names
-    const senderChannelName = getDirectMessageChannelName(currentUserId, targetUserId);
-    const receiverChannelName = getDirectMessageChannelName(targetUserId, currentUserId);
-    
-    // Create the channels
-    const senderChannel = ably.channels.get(senderChannelName);
-    const receiverChannel = ably.channels.get(receiverChannelName);
-    
+    // Return the message - Socket.IO handling will be done on the client side
     const messageData = {
       id: newMessage._id.toString(),
       senderId: currentUserId,
@@ -189,30 +175,8 @@ export async function POST(req: NextRequest) {
       avatar: currentUser.avatar,
       read: false
     };
-    
-    console.log('Publishing message to channels:', senderChannelName, receiverChannelName);
-    
-    // Publish to both channels
-    try {
-      await Promise.all([
-        senderChannel.publish('new-message', messageData),
-        receiverChannel.publish('new-message', messageData)
-      ]);
-      console.log('Message published successfully to both channels');
-    } catch (error) {
-      console.error('Error publishing to Ably:', error);
-    }
 
-    return NextResponse.json({ 
-      message: {
-        id: newMessage._id.toString(),
-        senderId: currentUserId,
-        receiverId: targetUserId,
-        content: newMessage.content,
-        timestamp: newMessage.timestamp,
-        read: newMessage.read
-      } 
-    });
+    return NextResponse.json({ message: messageData });
     
   } catch (error) {
     console.error("Error sending message:", error);

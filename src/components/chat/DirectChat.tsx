@@ -5,7 +5,7 @@ import { Send, User, ArrowLeft } from "lucide-react";
 import {
   getDirectMessageChannelName,
   DirectChatMessage as BaseDirectChatMessage,
-} from "@/lib/ably";
+} from "@/lib/socket";
 
 // Extend DirectChatMessage to include isCurrentUser
 interface DirectChatMessage {
@@ -14,12 +14,11 @@ interface DirectChatMessage {
   receiverId: string;
   content: string;
   timestamp: number;
-  read: boolean;
-  isCurrentUser?: boolean; // This is the key addition
+  read: boolean;  isCurrentUser?: boolean; // This is the key addition
   senderName?: string;
   avatar?: string;
 }
-import { useChannel } from "@/hooks/useChannel";
+import { useDirectChat } from "@/hooks/useSocket";
 import { useRouter } from "next/navigation";
 
 interface DirectChatProps {
@@ -53,20 +52,15 @@ export default function DirectChat({
   useEffect(() => {
     messagesRef.current = messages;
   }, [messages]);
+  // Subscribe to direct chat channel using Socket.IO
+  const chatId = getDirectMessageChannelName(currentUserId, userId);
+  
+  // Handle new messages from Socket.IO
+  const handleNewMessage = (message: DirectChatMessage) => {
+    handleIncomingMessage(message);
+  };
 
-  // Subscribe to BOTH channels to ensure we get messages in both directions
-  const senderChannelName = getDirectMessageChannelName(currentUserId, userId);
-  const receiverChannelName = getDirectMessageChannelName(
-    userId,
-    currentUserId
-  );
-
-  // Log channel names for debugging
-  console.log(
-    "Channels we're listening on:",
-    senderChannelName,
-    receiverChannelName
-  );
+  const { sendMessage } = useDirectChat(chatId, handleNewMessage);
 
   // Common handler for all incoming messages
   // Update the handleIncomingMessage function:
@@ -103,22 +97,11 @@ const handleIncomingMessage = (newMsg: DirectChatMessage) => {
       newMessages[tempIndex] = newMsg;
       return newMessages;
     }
-    
-    // Add as new message
+      // Add as new message
     console.log("Adding new message");
     return [...prevMessages, newMsg];
   });
 };
-
-  // Subscribe to receiver channel (messages sent to me)
-  useChannel(receiverChannelName, (message) => {
-    handleIncomingMessage(message.data);
-  });
-
-  // Subscribe to sender channel (messages I send)
-  useChannel(senderChannelName, (message) => {
-    handleIncomingMessage(message.data);
-  });
 
   // Fetch past messages on mount
   useEffect(() => {
@@ -172,21 +155,6 @@ const handleIncomingMessage = (newMsg: DirectChatMessage) => {
     setNewMessage("");
 
     try {
-      // Add optimistic update with a temporary ID
-      const tempId = `temp-${Date.now()}`;
-      const tempMessage: DirectChatMessage = {
-        id: tempId,
-        senderId: currentUserId,
-        receiverId: userId,
-        senderName: currentUserName,
-        content: messageContent,
-        timestamp: Date.now(),
-        read: false,
-      };
-
-      // Add message optimistically
-      setMessages((prev) => [...prev, tempMessage]);
-
       console.log("Sending message:", messageContent);
 
       // Send the message to the API
@@ -202,6 +170,11 @@ const handleIncomingMessage = (newMsg: DirectChatMessage) => {
         const data = await response.json();
         throw new Error(data.error || "Failed to send message");
       }
+
+      const { message } = await response.json();
+      
+      // Send via Socket.IO (this will broadcast to other users)
+      sendMessage(message);
 
       console.log("Message sent successfully");
     } catch (error) {
