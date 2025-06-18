@@ -1,18 +1,76 @@
-import { getServerSession } from "next-auth/next";
-import { redirect } from "next/navigation";
 import Link from "next/link";
 import { CalendarDays, Users, ArrowRight, Plus, Search, Sparkles, MessageCircle, Globe, Star, CheckCircle, Clock, MapPin, QrCode } from "lucide-react";
-import { authOptions } from "@/lib/auth-options";
 
-export default async function Home() {
-  const session = await getServerSession(authOptions);
-
+export default function Home() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-indigo-900">
-      {/* Background Pattern */}
-      <div className="absolute inset-0 opacity-40">
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-indigo-900 overflow-hidden">
+      {/* Animated Background */}
+      <div className="absolute inset-0 opacity-60">
+        {/* Base gradient */}
         <div className="w-full h-full bg-gradient-to-br from-indigo-100/50 to-purple-100/50 dark:from-gray-800/50 dark:to-indigo-900/50"></div>
-        <div className="absolute inset-0 bg-[radial-gradient(circle_500px_at_50%_200px,#3730a3,transparent)]"></div>
+        
+        {/* Animated gradient orbs */}
+        <div className="absolute inset-0">
+          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-gradient-to-r from-indigo-400/30 to-purple-400/30 rounded-full blur-3xl animate-pulse"></div>
+          <div className="absolute top-3/4 right-1/4 w-80 h-80 bg-gradient-to-r from-purple-400/30 to-pink-400/30 rounded-full blur-3xl animate-pulse animation-delay-1000"></div>
+          <div className="absolute top-1/2 left-3/4 w-64 h-64 bg-gradient-to-r from-blue-400/30 to-indigo-400/30 rounded-full blur-3xl animate-pulse animation-delay-2000"></div>
+        </div>
+        
+        {/* Floating particles */}
+        <div className="absolute inset-0 overflow-hidden">
+          {/* Event Calendar Icon - Top Left */}
+          <div className="absolute top-20 left-16 animate-float animation-delay-500">
+            <div className="w-12 h-12 bg-indigo-400/20 rounded-lg flex items-center justify-center backdrop-blur-sm border border-indigo-300/30">
+              <CalendarDays className="w-6 h-6 text-indigo-500/60" />
+            </div>
+          </div>
+          
+          {/* Users/People Connection - Top Right */}
+          <div className="absolute top-32 right-16 animate-float animation-delay-1500">
+            <div className="w-14 h-10 bg-purple-400/20 rounded-full flex items-center justify-center backdrop-blur-sm border border-purple-300/30">
+              <Users className="w-7 h-7 text-purple-500/60" />
+            </div>
+          </div>
+          
+          {/* Message/Chat Bubble - Bottom Left */}
+          <div className="absolute bottom-32 left-20 animate-float animation-delay-1000">
+            <div className="relative">
+              <div className="w-10 h-10 bg-pink-400/20 rounded-lg flex items-center justify-center backdrop-blur-sm border border-pink-300/30">
+                <MessageCircle className="w-5 h-5 text-pink-500/60" />
+              </div>
+              <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-400/60 rounded-full animate-pulse"></div>
+            </div>
+          </div>
+          
+          {/* QR Code for Event Joining - Middle Right */}
+          <div className="absolute top-1/2 right-12 animate-float animation-delay-2000">
+            <div className="w-10 h-10 bg-blue-400/20 rounded border border-blue-300/30 backdrop-blur-sm flex items-center justify-center">
+              <QrCode className="w-5 h-5 text-blue-500/60" />
+            </div>
+          </div>
+          
+          {/* Plus Icon for Event Creation - Bottom Right */}
+          <div className="absolute bottom-40 right-20 animate-float animation-delay-2500">
+            <div className="w-11 h-11 bg-gradient-to-br from-indigo-400/20 to-purple-400/20 rounded-full border border-indigo-400/40 backdrop-blur-sm flex items-center justify-center">
+              <Plus className="w-6 h-6 text-indigo-500/60" />
+            </div>
+          </div>
+          
+          {/* Mini Event Card - Middle Left */}
+          <div className="absolute top-1/2 left-12 animate-float-slow animation-delay-1800">
+            <div className="w-16 h-12 bg-white/15 dark:bg-gray-800/25 rounded-lg border border-green-200/30 backdrop-blur-sm p-2">
+              <div className="flex items-center justify-between mb-1">
+                <div className="w-2 h-2 bg-green-400/60 rounded-full animate-pulse"></div>
+                <div className="text-[8px] text-green-600/50 font-medium">LIVE</div>
+              </div>
+              <div className="w-full h-1 bg-green-300/40 rounded mb-1"></div>
+              <div className="w-2/3 h-1 bg-green-300/30 rounded"></div>
+            </div>
+          </div>
+        </div>
+        
+        {/* Radial gradient overlay */}
+        <div className="absolute inset-0 bg-[radial-gradient(circle_600px_at_50%_300px,#3730a3,transparent)] opacity-20"></div>
       </div>
 
       {/* Navigation */}
@@ -43,29 +101,55 @@ export default async function Home() {
 
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Hero Section */}
-        <header className="py-20 text-center">
+        <header className="py-20 text-center relative">
+          {/* Additional floating elements specifically for hero */}
+          <div className="absolute inset-0 overflow-hidden pointer-events-none">
+            {/* Event ticket floating - Far Left */}
+            <div className="absolute top-40 left-8 animate-float-slow animation-delay-800">
+              <div className="w-18 h-12 bg-gradient-to-r from-indigo-400/15 to-purple-400/15 rounded-lg border-l-4 border-indigo-400/40 backdrop-blur-sm flex items-center justify-center">
+                <div className="text-xs text-indigo-600/60 font-mono">EVENT</div>
+              </div>
+            </div>
+            
+            {/* Connection network visualization - Far Right */}
+            <div className="absolute bottom-48 right-8 animate-float animation-delay-1200">
+              <div className="flex items-center space-x-2">
+                <div className="w-4 h-4 bg-green-400/50 rounded-full animate-pulse"></div>
+                <div className="w-6 h-0.5 bg-gradient-to-r from-green-400/40 to-purple-400/40"></div>
+                <div className="w-4 h-4 bg-purple-400/50 rounded-full animate-pulse animation-delay-500"></div>
+              </div>
+            </div>
+            
+            {/* Search/Join indicator - Left Side */}
+            <div className="absolute top-80 left-6 animate-float animation-delay-1600">
+              <div className="w-10 h-10 bg-gradient-to-br from-purple-400/20 to-pink-400/20 rounded-lg border border-purple-400/30 backdrop-blur-sm flex items-center justify-center">
+                <Search className="w-5 h-5 text-purple-500/60" />
+              </div>
+            </div>
+          </div>
+
           <div className="mb-8">
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-100/80 dark:bg-indigo-900/30 rounded-full text-indigo-700 dark:text-indigo-300 text-sm font-medium mb-6">
-              <Sparkles className="w-4 h-4" />
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-100/80 dark:bg-indigo-900/30 rounded-full text-indigo-700 dark:text-indigo-300 text-sm font-medium mb-6 backdrop-blur-sm border border-indigo-200/30 dark:border-indigo-700/30">
+              <Sparkles className="w-4 h-4 animate-pulse" />
               Event Management Made Simple
             </div>
           </div>
           
-          <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight text-gray-900 dark:text-white mb-8 leading-tight">
+          <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight text-gray-900 dark:text-white mb-8 leading-tight relative z-10">
             Create & Join Events with{' '}
-            <span className="bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 bg-clip-text text-transparent animate-gradient">
               EventHive
             </span>
           </h1>
           
-          <p className="text-xl md:text-2xl text-gray-600 dark:text-gray-300 max-w-4xl mx-auto mb-12 leading-relaxed">
+          <p className="text-xl md:text-2xl text-gray-600 dark:text-gray-300 max-w-4xl mx-auto mb-12 leading-relaxed relative z-10">
             The ultimate platform for organizing memorable events and discovering amazing experiences. Create, manage, and join events effortlessly while connecting with fellow attendees.
           </p>
           
-          <div className="flex flex-col sm:flex-row gap-6 justify-center items-center mb-16">
+          <div className="flex flex-col sm:flex-row gap-6 justify-center items-center mb-16 relative z-10">
             <Link 
               href="/sign-up" 
-              className="group px-8 py-4 bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-semibold rounded-2xl hover:from-indigo-600 hover:to-purple-700 transition-all duration-200 shadow-xl hover:shadow-2xl transform hover:scale-105 flex items-center gap-2"
+              className="group px-8 py-4 bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-semibold rounded-2xl hover:from-indigo-600 hover:to-purple-700 transition-all duration-200 shadow-xl hover:shadow-2xl transform hover:scale-105 flex items-center gap-2 backdrop-blur-sm"
             >
               Start Creating Events
               <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
@@ -79,13 +163,13 @@ export default async function Home() {
           </div>
 
           {/* Trust Indicators */}
-          <div className="flex flex-wrap justify-center items-center gap-8 text-gray-500 dark:text-gray-400">
-            <div className="flex items-center gap-2">
-              <Star className="w-5 h-5 text-yellow-500 fill-current" />
+          <div className="flex flex-wrap justify-center items-center gap-8 text-gray-500 dark:text-gray-400 relative z-10">
+            <div className="flex items-center gap-2 backdrop-blur-sm bg-white/50 dark:bg-gray-800/50 px-4 py-2 rounded-full">
+              <Star className="w-5 h-5 text-yellow-500 fill-current animate-pulse" />
               <span className="font-medium">1000+ events created</span>
             </div>
-            <div className="flex items-center gap-2">
-              <CheckCircle className="w-5 h-5 text-green-500" />
+            <div className="flex items-center gap-2 backdrop-blur-sm bg-white/50 dark:bg-gray-800/50 px-4 py-2 rounded-full">
+              <CheckCircle className="w-5 h-5 text-green-500 animate-pulse animation-delay-500" />
               <span className="font-medium">5000+ happy attendees</span>
             </div>
           </div>
