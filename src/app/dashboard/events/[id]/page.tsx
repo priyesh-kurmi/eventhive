@@ -43,8 +43,7 @@ export default function EventDetailPage({ params }: EventParams) {
   const userId = userData?._id || userData?.id || session?.user?.id;
   // Get user's name
   const userName = userData?.name || session?.user?.name || "Anonymous User"; 
-  
-  const [event, setEvent] = useState<any>(null);
+    const [event, setEvent] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [isAttending, setIsAttending] = useState(false);
@@ -53,6 +52,8 @@ export default function EventDetailPage({ params }: EventParams) {
   const [activeTab, setActiveTab] = useState("details");
   const [showCode, setShowCode] = useState(false);
   const [codeCopied, setCodeCopied] = useState(false);
+  const [sendingRequest, setSendingRequest] = useState<string | null>(null);
+  const [connectionStatuses, setConnectionStatuses] = useState<{ [key: string]: string }>({});
 
   useEffect(() => {
     const fetchEvent = async () => {
@@ -118,6 +119,101 @@ export default function EventDetailPage({ params }: EventParams) {
       }, 2000);
     }
   };
+
+  // Handle sending connection request
+  const handleSendConnectionRequest = async (attendeeId: string) => {
+    if (!userId || attendeeId === userId) return;
+    
+    setSendingRequest(attendeeId);
+    try {
+      const response = await fetch('/api/user/connect/request', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ userId: attendeeId }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setConnectionStatuses(prev => ({
+          ...prev,
+          [attendeeId]: 'pending'
+        }));
+      } else {
+        console.error('Failed to send connection request:', data.error);
+      }
+    } catch (error) {
+      console.error('Error sending connection request:', error);
+    } finally {
+      setSendingRequest(null);
+    }
+  };
+
+  // Handle starting a chat
+  const handleStartChat = (attendeeId: string) => {
+    if (!userId || attendeeId === userId) return;
+    
+    // Navigate to direct message page
+    router.push(`/dashboard/messages/${attendeeId}`);
+  };
+  // Check connection status for attendees
+  useEffect(() => {
+    const fetchConnectionStatuses = async () => {
+      if (!event?.attendees || !userId) return;
+      
+      try {
+        // Fetch user connections and connection requests
+        const [connectionsResponse, requestsResponse] = await Promise.all([
+          fetch('/api/user/connections'),
+          fetch('/api/user/connect/requests')
+        ]);
+        
+        const statuses: { [key: string]: string } = {};
+        
+        if (connectionsResponse.ok && requestsResponse.ok) {
+          const connectionsData = await connectionsResponse.json();
+          const requestsData = await requestsResponse.json();
+          
+          // Map of connected user IDs
+          const connectedIds = new Set(connectionsData.connections?.map((conn: any) => conn.id) || []);
+          
+          // Map of pending/received requests
+          const pendingRequestIds = new Set(requestsData.pendingRequests?.map((req: any) => req.from._id) || []);
+          
+          event.attendees.forEach((attendee: any) => {
+            if (attendee._id === userId) {
+              statuses[attendee._id] = 'self';
+            } else if (connectedIds.has(attendee._id)) {
+              statuses[attendee._id] = 'connected';
+            } else if (pendingRequestIds.has(attendee._id)) {
+              statuses[attendee._id] = 'received';
+            } else {
+              statuses[attendee._id] = 'none';
+            }
+          });
+        } else {
+          // Default status for all attendees if API calls fail
+          event.attendees.forEach((attendee: any) => {
+            statuses[attendee._id] = attendee._id === userId ? 'self' : 'none';
+          });
+        }
+        
+        setConnectionStatuses(statuses);
+      } catch (error) {
+        console.error('Error fetching connection statuses:', error);
+        // Set default statuses on error
+        const statuses: { [key: string]: string } = {};
+        event.attendees.forEach((attendee: any) => {
+          statuses[attendee._id] = attendee._id === userId ? 'self' : 'none';
+        });
+        setConnectionStatuses(statuses);
+      }
+    };
+
+    fetchConnectionStatuses();
+  }, [event?.attendees, userId]);
 
   if (loading) {
     return (
@@ -510,21 +606,74 @@ export default function EventDetailPage({ params }: EventParams) {
                             </p>
                           </div>
                         </div>
-                        
-                        <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-600">
+                          <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-600">
                           <div className="flex items-center justify-between">
                             <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">ATTENDEE</span>
                             <div className="flex items-center space-x-1">
-                              <button className="p-1.5 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-all duration-200">
+                              {/* Chat Button */}
+                              <button 
+                                onClick={() => handleStartChat(attendee._id)}
+                                disabled={attendee._id === userId}
+                                className="p-1.5 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                                title="Start chat"
+                              >
                                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                                 </svg>
                               </button>
-                              <button className="p-1.5 text-gray-400 hover:text-green-600 dark:hover:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition-all duration-200">
-                                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
-                                </svg>
-                              </button>
+                                {/* Connection Request Button */}
+                              {attendee._id !== userId && (
+                                <button 
+                                  onClick={() => handleSendConnectionRequest(attendee._id)}
+                                  disabled={
+                                    sendingRequest === attendee._id || 
+                                    connectionStatuses[attendee._id] === 'connected' || 
+                                    connectionStatuses[attendee._id] === 'pending' ||
+                                    connectionStatuses[attendee._id] === 'received'
+                                  }
+                                  className={`p-1.5 rounded-lg transition-all duration-200 ${
+                                    connectionStatuses[attendee._id] === 'connected' 
+                                      ? 'text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20' 
+                                      : connectionStatuses[attendee._id] === 'pending'
+                                      ? 'text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/20'
+                                      : connectionStatuses[attendee._id] === 'received'
+                                      ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20'
+                                      : 'text-gray-400 hover:text-green-600 dark:hover:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20'
+                                  } disabled:opacity-50 disabled:cursor-not-allowed`}
+                                  title={
+                                    connectionStatuses[attendee._id] === 'connected' 
+                                      ? 'Already connected' 
+                                      : connectionStatuses[attendee._id] === 'pending'
+                                      ? 'Request sent'
+                                      : connectionStatuses[attendee._id] === 'received'
+                                      ? 'Request received'
+                                      : 'Send connection request'
+                                  }
+                                >
+                                  {sendingRequest === attendee._id ? (
+                                    <svg className="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
+                                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    </svg>
+                                  ) : connectionStatuses[attendee._id] === 'connected' ? (
+                                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                    </svg>
+                                  ) : connectionStatuses[attendee._id] === 'pending' ? (
+                                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                  ) : connectionStatuses[attendee._id] === 'received' ? (
+                                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
+                                    </svg>
+                                  ) : (
+                                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
+                                    </svg>
+                                  )}
+                                </button>
+                              )}
                             </div>
                           </div>
                         </div>
