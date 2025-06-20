@@ -1,99 +1,94 @@
 import Link from "next/link";
-import { CalendarDays, Users, ArrowRight, Plus, Search, Sparkles, MessageCircle, Globe, Star, CheckCircle, Clock, MapPin, QrCode } from "lucide-react";
+import { CalendarDays, Users, ArrowRight, Plus, Search, Sparkles, MessageCircle, Globe, Star, CheckCircle, Clock, MapPin, QrCode, Zap, Heart, TrendingUp } from "lucide-react";
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-indigo-900 overflow-hidden">
-      {/* Animated Background */}
-      <div className="absolute inset-0 opacity-60">
-        {/* Base gradient */}
-        <div className="w-full h-full bg-gradient-to-br from-indigo-100/50 to-purple-100/50 dark:from-gray-800/50 dark:to-indigo-900/50"></div>
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-indigo-900 overflow-hidden relative">
+      {/* Enhanced Animated Background */}
+      <div className="absolute inset-0 opacity-80">
+        {/* Dynamic base gradient with movement */}
+        <div className="w-full h-full bg-gradient-to-br from-indigo-100/60 to-purple-100/60 dark:from-gray-800/60 dark:to-indigo-900/60 animate-gradient"></div>
         
-        {/* Animated gradient orbs */}
+        {/* Enhanced animated gradient orbs with more sophisticated movement */}
         <div className="absolute inset-0">
-          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-gradient-to-r from-indigo-400/30 to-purple-400/30 rounded-full blur-3xl animate-pulse"></div>
-          <div className="absolute top-3/4 right-1/4 w-80 h-80 bg-gradient-to-r from-purple-400/30 to-pink-400/30 rounded-full blur-3xl animate-pulse animation-delay-1000"></div>
-          <div className="absolute top-1/2 left-3/4 w-64 h-64 bg-gradient-to-r from-blue-400/30 to-indigo-400/30 rounded-full blur-3xl animate-pulse animation-delay-2000"></div>
+          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-gradient-to-r from-indigo-400/40 to-purple-400/40 rounded-full blur-3xl animate-pulse-soft"></div>
+          <div className="absolute top-3/4 right-1/4 w-80 h-80 bg-gradient-to-r from-purple-400/40 to-pink-400/40 rounded-full blur-3xl animate-pulse-soft animation-delay-1000"></div>
+          <div className="absolute top-1/2 left-3/4 w-64 h-64 bg-gradient-to-r from-blue-400/40 to-indigo-400/40 rounded-full blur-3xl animate-pulse-soft animation-delay-2000"></div>
+          <div className="absolute bottom-1/4 left-1/6 w-72 h-72 bg-gradient-to-r from-green-400/30 to-teal-400/30 rounded-full blur-3xl animate-pulse-soft animation-delay-1500"></div>
+          <div className="absolute top-10 right-1/3 w-48 h-48 bg-gradient-to-r from-yellow-400/25 to-orange-400/25 rounded-full blur-2xl animate-pulse-soft animation-delay-2500"></div>
         </div>
         
-        {/* Floating particles */}
-        <div className="absolute inset-0 overflow-hidden">
-          {/* Event Calendar Icon - Top Left */}
-          <div className="absolute top-20 left-16 animate-float animation-delay-500">
-            <div className="w-12 h-12 bg-indigo-400/20 rounded-lg flex items-center justify-center backdrop-blur-sm border border-indigo-300/30">
-              <CalendarDays className="w-6 h-6 text-indigo-500/60" />
-            </div>
-          </div>
-          
-          {/* Users/People Connection - Top Right */}
-          <div className="absolute top-32 right-16 animate-float animation-delay-1500">
-            <div className="w-14 h-10 bg-purple-400/20 rounded-full flex items-center justify-center backdrop-blur-sm border border-purple-300/30">
-              <Users className="w-7 h-7 text-purple-500/60" />
-            </div>
-          </div>
-          
-          {/* Message/Chat Bubble - Bottom Left */}
-          <div className="absolute bottom-32 left-20 animate-float animation-delay-1000">
-            <div className="relative">
-              <div className="w-10 h-10 bg-pink-400/20 rounded-lg flex items-center justify-center backdrop-blur-sm border border-pink-300/30">
-                <MessageCircle className="w-5 h-5 text-pink-500/60" />
-              </div>
-              <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-400/60 rounded-full animate-pulse"></div>
-            </div>
-          </div>
-          
-          {/* QR Code for Event Joining - Middle Right */}
-          <div className="absolute top-1/2 right-12 animate-float animation-delay-2000">
-            <div className="w-10 h-10 bg-blue-400/20 rounded border border-blue-300/30 backdrop-blur-sm flex items-center justify-center">
-              <QrCode className="w-5 h-5 text-blue-500/60" />
-            </div>
-          </div>
-          
-          {/* Plus Icon for Event Creation - Bottom Right */}
-          <div className="absolute bottom-40 right-20 animate-float animation-delay-2500">
-            <div className="w-11 h-11 bg-gradient-to-br from-indigo-400/20 to-purple-400/20 rounded-full border border-indigo-400/40 backdrop-blur-sm flex items-center justify-center">
-              <Plus className="w-6 h-6 text-indigo-500/60" />
-            </div>
-          </div>
-          
-          {/* Mini Event Card - Middle Left */}
-          <div className="absolute top-1/2 left-12 animate-float-slow animation-delay-1800">
-            <div className="w-16 h-12 bg-white/15 dark:bg-gray-800/25 rounded-lg border border-green-200/30 backdrop-blur-sm p-2">
-              <div className="flex items-center justify-between mb-1">
-                <div className="w-2 h-2 bg-green-400/60 rounded-full animate-pulse"></div>
-                <div className="text-[8px] text-green-600/50 font-medium">LIVE</div>
-              </div>
-              <div className="w-full h-1 bg-green-300/40 rounded mb-1"></div>
-              <div className="w-2/3 h-1 bg-green-300/30 rounded"></div>
-            </div>
-          </div>
-        </div>
-        
-        {/* Radial gradient overlay */}
-        <div className="absolute inset-0 bg-[radial-gradient(circle_600px_at_50%_300px,#3730a3,transparent)] opacity-20"></div>
+        {/* Enhanced radial gradient overlay with better depth */}
+        <div className="absolute inset-0 bg-[radial-gradient(circle_800px_at_50%_300px,#3730a3,transparent)] opacity-30"></div>
+        <div className="absolute inset-0 bg-[radial-gradient(circle_600px_at_80%_200px,#7c3aed,transparent)] opacity-20"></div>
       </div>
 
       {/* Navigation */}
-      <nav className="relative z-10 px-4 sm:px-6 lg:px-8 py-6">
+      <nav className="relative z-10 px-4 sm:px-6 lg:px-8 py-6 animate-slide-in-up">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+          <div className="flex items-center gap-3 group cursor-pointer">
+            <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
               <CalendarDays className="w-6 h-6 text-white" />
             </div>
-            <span className="text-2xl font-bold text-gray-900 dark:text-white">EventHive</span>
+            <span className="text-2xl font-bold gradient-text-animated">EventHive</span>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="hidden md:flex items-center gap-8">
+            <Link 
+              href="/" 
+              className="text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 font-medium transition-all duration-300 hover:scale-105"
+            >
+              Home
+            </Link>
+            <Link 
+              href="/features" 
+              className="text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 font-medium transition-all duration-300 hover:scale-105"
+            >
+              Features
+            </Link>
+            <Link 
+              href="/pricing" 
+              className="text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 font-medium transition-all duration-300 hover:scale-105"
+            >
+              Pricing
+            </Link>
+            <Link 
+              href="/about" 
+              className="text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 font-medium transition-all duration-300 hover:scale-105"
+            >
+              About Us
+            </Link>
+            <Link 
+              href="/contact" 
+              className="text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 font-medium transition-all duration-300 hover:scale-105"
+            >
+              Contact Us
+            </Link>
             <Link 
               href="/sign-in" 
-              className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 font-medium transition-colors"
+              className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 font-medium transition-all duration-300 hover:scale-105"
             >
               Sign In
             </Link>
+          </div>
+          {/* Mobile menu */}
+          <div className="md:hidden flex items-center gap-4">
             <Link 
-              href="/sign-up" 
-              className="px-6 py-2 bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-medium rounded-xl hover:from-indigo-600 hover:to-purple-700 transition-all shadow-lg hover:shadow-xl transform hover:scale-105"
+              href="/features" 
+              className="text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 font-medium transition-all duration-300 text-sm"
             >
-              Get Started
+              Features
+            </Link>
+            <Link 
+              href="/pricing" 
+              className="text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 font-medium transition-all duration-300 text-sm"
+            >
+              Pricing
+            </Link>
+            <Link 
+              href="/sign-in" 
+              className="px-3 py-1 text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 font-medium transition-all duration-300 text-sm"
+            >
+              Sign In
             </Link>
           </div>
         </div>
@@ -102,82 +97,66 @@ export default function Home() {
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Hero Section */}
         <header className="py-20 text-center relative">
-          {/* Additional floating elements specifically for hero */}
-          <div className="absolute inset-0 overflow-hidden pointer-events-none">
-            {/* Event ticket floating - Far Left */}
-            <div className="absolute top-40 left-8 animate-float-slow animation-delay-800">
-              <div className="w-18 h-12 bg-gradient-to-r from-indigo-400/15 to-purple-400/15 rounded-lg border-l-4 border-indigo-400/40 backdrop-blur-sm flex items-center justify-center">
-                <div className="text-xs text-indigo-600/60 font-mono">EVENT</div>
-              </div>
-            </div>
-            
-            {/* Connection network visualization - Far Right */}
-            <div className="absolute bottom-48 right-8 animate-float animation-delay-1200">
-              <div className="flex items-center space-x-2">
-                <div className="w-4 h-4 bg-green-400/50 rounded-full animate-pulse"></div>
-                <div className="w-6 h-0.5 bg-gradient-to-r from-green-400/40 to-purple-400/40"></div>
-                <div className="w-4 h-4 bg-purple-400/50 rounded-full animate-pulse animation-delay-500"></div>
-              </div>
-            </div>
-            
-            {/* Search/Join indicator - Left Side */}
-            <div className="absolute top-80 left-6 animate-float animation-delay-1600">
-              <div className="w-10 h-10 bg-gradient-to-br from-purple-400/20 to-pink-400/20 rounded-lg border border-purple-400/30 backdrop-blur-sm flex items-center justify-center">
-                <Search className="w-5 h-5 text-purple-500/60" />
-              </div>
-            </div>
-          </div>
-
-          <div className="mb-8">
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-100/80 dark:bg-indigo-900/30 rounded-full text-indigo-700 dark:text-indigo-300 text-sm font-medium mb-6 backdrop-blur-sm border border-indigo-200/30 dark:border-indigo-700/30">
+          <div className="mb-8 animate-slide-in-up animation-delay-200">
+            <div className="inline-flex items-center gap-2 px-4 py-2 glass-morphism rounded-full text-indigo-700 dark:text-indigo-300 text-sm font-medium mb-6 border border-indigo-200/30 dark:border-indigo-700/30 hover:scale-105 transition-transform duration-300">
               <Sparkles className="w-4 h-4 animate-pulse" />
               Event Management Made Simple
             </div>
           </div>
           
-          <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight text-gray-900 dark:text-white mb-8 leading-tight relative z-10">
+          <h1 className="hero-title-responsive md:text-6xl lg:text-7xl font-bold tracking-tight text-gray-900 dark:text-white mb-8 leading-tight relative z-10 animate-slide-in-up animation-delay-300">
             Create & Join Events with{' '}
-            <span className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 bg-clip-text text-transparent animate-gradient">
+            <span className="gradient-text-animated">
               EventHive
             </span>
           </h1>
           
-          <p className="text-xl md:text-2xl text-gray-600 dark:text-gray-300 max-w-4xl mx-auto mb-12 leading-relaxed relative z-10">
+          <p className="hero-subtitle-responsive md:text-2xl text-gray-600 dark:text-gray-300 max-w-4xl mx-auto mb-12 leading-relaxed relative z-10 animate-slide-in-up animation-delay-500">
             The ultimate platform for organizing memorable events and discovering amazing experiences. Create, manage, and join events effortlessly while connecting with fellow attendees.
           </p>
           
-          <div className="flex flex-col sm:flex-row gap-6 justify-center items-center mb-16 relative z-10">
+          <div className="flex flex-col sm:flex-row gap-6 justify-center items-center mb-16 relative z-10 animate-slide-in-up animation-delay-700">
             <Link 
               href="/sign-up" 
-              className="group px-8 py-4 bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-semibold rounded-2xl hover:from-indigo-600 hover:to-purple-700 transition-all duration-200 shadow-xl hover:shadow-2xl transform hover:scale-105 flex items-center gap-2 backdrop-blur-sm"
+              className="group px-8 py-4 bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-semibold rounded-2xl hover:from-indigo-600 hover:to-purple-700 transition-all duration-300 shadow-xl hover:shadow-2xl transform hover:scale-105 flex items-center gap-2 backdrop-blur-sm relative overflow-hidden"
             >
-              Start Creating Events
-              <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+              <span className="relative z-10 flex items-center gap-2">
+                Start Creating Events
+                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+              </span>
+              <div className="absolute inset-0 bg-white/10 transform -skew-x-12 translate-x-full group-hover:translate-x-0 transition-transform duration-500"></div>
             </Link>
             <Link 
               href="/sign-in" 
-              className="px-8 py-4 bg-white/80 dark:bg-gray-800/80 backdrop-blur-lg text-gray-900 dark:text-white font-semibold rounded-2xl border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all shadow-lg hover:shadow-xl"
+              className="group px-8 py-4 glass-morphism text-gray-900 dark:text-white font-semibold rounded-2xl border border-gray-200 dark:border-gray-700 hover:bg-gray-50/50 dark:hover:bg-gray-700/50 transition-all shadow-lg hover:shadow-xl hover:scale-105 duration-300"
             >
-              Explore Events
+              <span className="flex items-center gap-2">
+                Explore Events
+                <Search className="w-5 h-5 group-hover:rotate-12 transition-transform" />
+              </span>
             </Link>
           </div>
 
-          {/* Trust Indicators */}
-          <div className="flex flex-wrap justify-center items-center gap-8 text-gray-500 dark:text-gray-400 relative z-10">
-            <div className="flex items-center gap-2 backdrop-blur-sm bg-white/50 dark:bg-gray-800/50 px-4 py-2 rounded-full">
+          {/* Enhanced Trust Indicators */}
+          <div className="flex flex-wrap justify-center items-center gap-8 text-gray-500 dark:text-gray-400 relative z-10 animate-slide-in-up animation-delay-1000">
+            <div className="flex items-center gap-2 glass-morphism px-4 py-2 rounded-full hover:scale-105 transition-transform duration-300">
               <Star className="w-5 h-5 text-yellow-500 fill-current animate-pulse" />
               <span className="font-medium">1000+ events created</span>
             </div>
-            <div className="flex items-center gap-2 backdrop-blur-sm bg-white/50 dark:bg-gray-800/50 px-4 py-2 rounded-full">
+            <div className="flex items-center gap-2 glass-morphism px-4 py-2 rounded-full hover:scale-105 transition-transform duration-300">
               <CheckCircle className="w-5 h-5 text-green-500 animate-pulse animation-delay-500" />
               <span className="font-medium">5000+ happy attendees</span>
+            </div>
+            <div className="flex items-center gap-2 glass-morphism px-4 py-2 rounded-full hover:scale-105 transition-transform duration-300">
+              <TrendingUp className="w-5 h-5 text-indigo-500 animate-pulse animation-delay-1000" />
+              <span className="font-medium">Growing fast</span>
             </div>
           </div>
         </header>
 
         {/* Features Grid */}
         <section className="py-20">
-          <div className="text-center mb-16">
+          <div className="text-center mb-16 animate-slide-in-up">
             <h2 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-6">
               Why Choose EventHive?
             </h2>
@@ -187,8 +166,8 @@ export default function Home() {
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="group bg-white/80 dark:bg-gray-800/80 backdrop-blur-lg p-8 rounded-3xl shadow-xl border border-white/20 dark:border-gray-700/20 hover:shadow-2xl transition-all duration-300 hover:scale-105">
-              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center mb-6 shadow-lg group-hover:scale-110 transition-transform">
+            <div className="group glass-morphism p-8 rounded-3xl shadow-xl border border-white/20 dark:border-gray-700/20 hover:shadow-2xl transition-all duration-300 hover:scale-105 animate-slide-in-left animation-delay-200">
+              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center mb-6 shadow-lg group-hover:scale-110 transition-transform group-hover:animate-wiggle">
                 <Plus className="h-8 w-8 text-white" />
               </div>
               <h3 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white">Easy Event Creation</h3>
@@ -197,8 +176,8 @@ export default function Home() {
               </p>
             </div>
             
-            <div className="group bg-white/80 dark:bg-gray-800/80 backdrop-blur-lg p-8 rounded-3xl shadow-xl border border-white/20 dark:border-gray-700/20 hover:shadow-2xl transition-all duration-300 hover:scale-105">
-              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center mb-6 shadow-lg group-hover:scale-110 transition-transform">
+            <div className="group glass-morphism p-8 rounded-3xl shadow-xl border border-white/20 dark:border-gray-700/20 hover:shadow-2xl transition-all duration-300 hover:scale-105 animate-slide-in-up animation-delay-500">
+              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center mb-6 shadow-lg group-hover:scale-110 transition-transform group-hover:animate-wiggle">
                 <Search className="h-8 w-8 text-white" />
               </div>
               <h3 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white">Discover & Join</h3>
@@ -207,8 +186,8 @@ export default function Home() {
               </p>
             </div>
             
-            <div className="group bg-white/80 dark:bg-gray-800/80 backdrop-blur-lg p-8 rounded-3xl shadow-xl border border-white/20 dark:border-gray-700/20 hover:shadow-2xl transition-all duration-300 hover:scale-105">
-              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center mb-6 shadow-lg group-hover:scale-110 transition-transform">
+            <div className="group glass-morphism p-8 rounded-3xl shadow-xl border border-white/20 dark:border-gray-700/20 hover:shadow-2xl transition-all duration-300 hover:scale-105 animate-slide-in-right animation-delay-800">
+              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center mb-6 shadow-lg group-hover:scale-110 transition-transform group-hover:animate-wiggle">
                 <MessageCircle className="h-8 w-8 text-white" />
               </div>
               <h3 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white">Connect & Chat</h3>
@@ -221,7 +200,7 @@ export default function Home() {
 
         {/* How It Works */}
         <section className="py-20">
-          <div className="text-center mb-16">
+          <div className="text-center mb-16 animate-slide-in-up">
             <h2 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-6">
               How It Works
             </h2>
@@ -261,12 +240,12 @@ export default function Home() {
                 color: "from-green-500 to-green-600"
               }
             ].map((item, i) => (
-              <div key={i} className="text-center group">
-                <div className={`w-20 h-20 rounded-3xl bg-gradient-to-br ${item.color} text-white flex items-center justify-center mx-auto mb-6 shadow-xl group-hover:scale-110 transition-transform`}>
+              <div key={i} className="text-center group animate-slide-in-up" style={{ animationDelay: `${(i + 1) * 200}ms` }}>
+                <div className={`w-20 h-20 rounded-3xl bg-gradient-to-br ${item.color} text-white flex items-center justify-center mx-auto mb-6 shadow-xl group-hover:scale-110 transition-transform group-hover:animate-wiggle`}>
                   <item.icon className="w-10 h-10" />
                 </div>
                 <div className="mb-4">
-                  <span className="inline-flex items-center justify-center w-8 h-8 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full text-sm font-bold mb-2">
+                  <span className="inline-flex items-center justify-center w-8 h-8 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full text-sm font-bold mb-2 group-hover:scale-110 transition-transform">
                     {item.step}
                   </span>
                 </div>
@@ -279,7 +258,7 @@ export default function Home() {
 
         {/* Feature Highlights */}
         <section className="py-20">
-          <div className="text-center mb-16">
+          <div className="text-center mb-16 animate-slide-in-up">
             <h2 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-6">
               Powerful Features
             </h2>
@@ -289,9 +268,9 @@ export default function Home() {
           </div>
           
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-            <div className="space-y-8">
-              <div className="flex items-start gap-4">
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center flex-shrink-0">
+            <div className="space-y-8 animate-slide-in-left">
+              <div className="flex items-start gap-4 group">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
                   <CalendarDays className="w-6 h-6 text-white" />
                 </div>
                 <div>
@@ -300,8 +279,8 @@ export default function Home() {
                 </div>
               </div>
               
-              <div className="flex items-start gap-4">
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center flex-shrink-0">
+              <div className="flex items-start gap-4 group">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
                   <QrCode className="w-6 h-6 text-white" />
                 </div>
                 <div>
@@ -310,8 +289,8 @@ export default function Home() {
                 </div>
               </div>
               
-              <div className="flex items-start gap-4">
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-green-500 to-teal-600 flex items-center justify-center flex-shrink-0">
+              <div className="flex items-start gap-4 group">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-green-500 to-teal-600 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
                   <Globe className="w-6 h-6 text-white" />
                 </div>
                 <div>
@@ -321,11 +300,11 @@ export default function Home() {
               </div>
             </div>
             
-            <div className="bg-gradient-to-br from-indigo-500/10 to-purple-500/10 rounded-3xl p-8 border border-indigo-200 dark:border-indigo-800">
+            <div className="bg-gradient-to-br from-indigo-500/10 to-purple-500/10 rounded-3xl p-8 border border-indigo-200 dark:border-indigo-800 animate-slide-in-right">
               <div className="space-y-6">
-                <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg">
+                <div className="glass-morphism rounded-2xl p-6 shadow-lg hover:scale-105 transition-transform group">
                   <div className="flex items-center gap-3 mb-4">
-                    <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg"></div>
+                    <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg group-hover:animate-wiggle"></div>
                     <div>
                       <h4 className="font-semibold text-gray-900 dark:text-white">Tech Meetup 2025</h4>
                       <p className="text-sm text-gray-500">by EventHive Team</p>
@@ -351,8 +330,8 @@ export default function Home() {
                   <p className="text-gray-600 dark:text-gray-400 text-sm mb-4">Real-time event preview</p>
                   <div className="flex justify-center gap-2">
                     <div className="w-2 h-2 bg-indigo-500 rounded-full animate-pulse"></div>
-                    <div className="w-2 h-2 bg-purple-500 rounded-full animate-pulse delay-100"></div>
-                    <div className="w-2 h-2 bg-pink-500 rounded-full animate-pulse delay-200"></div>
+                    <div className="w-2 h-2 bg-purple-500 rounded-full animate-pulse animation-delay-100"></div>
+                    <div className="w-2 h-2 bg-pink-500 rounded-full animate-pulse animation-delay-200"></div>
                   </div>
                 </div>
               </div>
@@ -362,52 +341,66 @@ export default function Home() {
 
         {/* CTA Section */}
         <section className="py-20">
-          <div className="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-3xl p-12 text-center shadow-2xl">
-            <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
-              Ready to Create Amazing Events?
-            </h2>
-            <p className="text-xl text-indigo-100 mb-8 max-w-2xl mx-auto">
-              Join thousands of event creators and attendees who are building connections and memorable experiences.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link 
-                href="/sign-up" 
-                className="inline-flex items-center gap-3 px-8 py-4 bg-white text-indigo-600 font-bold rounded-2xl hover:bg-gray-50 transition-all shadow-lg hover:shadow-xl transform hover:scale-105"
-              >
-                Start Creating Events
-                <Plus className="w-5 h-5" />
-              </Link>
-              <Link 
-                href="/sign-in" 
-                className="inline-flex items-center gap-3 px-8 py-4 bg-transparent border-2 border-white text-white font-bold rounded-2xl hover:bg-white hover:text-indigo-600 transition-all"
-              >
-                Browse Events
-                <Search className="w-5 h-5" />
-              </Link>
+          <div className="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-3xl p-8 sm:p-12 text-center shadow-2xl relative overflow-hidden group animate-slide-in-up">
+            {/* Enhanced background effects */}
+            <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-pink-600 opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
+            <div className="absolute inset-0">
+              <div className="absolute top-4 left-4 w-2 h-2 bg-white/30 rounded-full animate-pulse"></div>
+              <div className="absolute top-8 right-8 w-1 h-1 bg-white/40 rounded-full animate-pulse animation-delay-500"></div>
+              <div className="absolute bottom-6 left-12 w-1.5 h-1.5 bg-white/20 rounded-full animate-pulse animation-delay-1000"></div>
+              <div className="absolute bottom-12 right-6 w-2 h-2 bg-white/30 rounded-full animate-pulse animation-delay-1500"></div>
+            </div>
+            
+            <div className="relative z-10">
+              <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-6">
+                Ready to Create Amazing Events?
+              </h2>
+              <p className="text-lg sm:text-xl text-indigo-100 mb-8 max-w-2xl mx-auto">
+                Join thousands of event creators and attendees who are building connections and memorable experiences.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <Link 
+                  href="/sign-up" 
+                  className="group inline-flex items-center gap-3 px-8 py-4 bg-white text-indigo-600 font-bold rounded-2xl hover:bg-gray-50 transition-all shadow-lg hover:shadow-xl transform hover:scale-105 relative overflow-hidden"
+                >
+                  <span className="relative z-10 flex items-center gap-3">
+                    Start Creating Events
+                    <Plus className="w-5 h-5 group-hover:rotate-90 transition-transform" />
+                  </span>
+                  <div className="absolute inset-0 bg-gradient-to-r from-indigo-100 to-purple-100 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                </Link>
+                <Link 
+                  href="/sign-in" 
+                  className="group inline-flex items-center gap-3 px-8 py-4 bg-transparent border-2 border-white text-white font-bold rounded-2xl hover:bg-white hover:text-indigo-600 transition-all duration-300"
+                >
+                  Browse Events
+                  <Search className="w-5 h-5 group-hover:scale-110 transition-transform" />
+                </Link>
+              </div>
             </div>
           </div>
         </section>
       </div>
 
       {/* Footer */}
-      <footer className="relative z-10 py-12 border-t border-gray-200 dark:border-gray-700 bg-white/50 dark:bg-gray-900/50 backdrop-blur-lg">
+      <footer className="relative z-10 py-12 border-t border-gray-200 dark:border-gray-700 glass-morphism">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col md:flex-row justify-between items-center">
-            <div className="flex items-center gap-3 mb-4 md:mb-0">
-              <div className="w-8 h-8 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center">
+            <div className="flex items-center gap-3 mb-4 md:mb-0 group">
+              <div className="w-8 h-8 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
                 <CalendarDays className="w-5 h-5 text-white" />
               </div>
-              <span className="text-xl font-bold text-gray-900 dark:text-white">EventHive</span>
+              <span className="text-xl font-bold gradient-text-animated">EventHive</span>
             </div>
             <div className="flex items-center gap-8">
-              <Link href="/terms" className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">Terms</Link>
-              <Link href="/privacy" className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">Privacy</Link>
-              <Link href="/contact" className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">Contact</Link>
+              <Link href="/terms" className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors hover:scale-105 duration-300">Terms</Link>
+              <Link href="/privacy" className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors hover:scale-105 duration-300">Privacy</Link>
+              <Link href="/contact" className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors hover:scale-105 duration-300">Contact</Link>
             </div>
           </div>
           <div className="mt-8 pt-8 border-t border-gray-200 dark:border-gray-700 text-center">
-            <p className="text-gray-500 dark:text-gray-400">
-              &copy; {new Date().getFullYear()} EventHive. All rights reserved. Built with ❤️ for amazing events.
+            <p className="text-gray-500 dark:text-gray-400 flex items-center justify-center gap-2">
+              &copy; {new Date().getFullYear()} EventHive. All rights reserved. Built with <Heart className="w-4 h-4 text-red-500 animate-pulse" /> for amazing events.
             </p>
           </div>
         </div>
